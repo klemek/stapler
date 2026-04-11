@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Static pages as simple as a gzip file"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "importlib>=1.0.4",
+    "toml>=0.10.2",
+]
 
 [dependency-groups]
 dev = [

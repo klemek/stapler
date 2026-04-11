@@ -1,5 +1,11 @@
+from src.params import parse_parameters
+from src.server import StaplerServer
+
+
 def main():
-    print("Hello from stapler!")
+    params = parse_parameters()
+    server = StaplerServer(params)
+    server.start()
 
 
 if __name__ == "__main__":
