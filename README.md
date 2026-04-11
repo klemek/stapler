@@ -31,6 +31,19 @@ tar -czC dist . | curl -X PUT \
   http://stapler-host/target/
 ```
 
+### Delete page
+
+```txt
+DELETE /{page}/
+```
+
+```bash
+# delete /target/
+curl -X DELETE \
+  -H 'X-Token: <TOKEN>' \
+  http://stapler-host/target/
+```
+
 ## TODO
 
 - [x] basic http server

@@ -49,6 +49,20 @@ class _StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.send_status_only(http.HTTPStatus.CREATED, f"Resource /{sub_path}/ updated")
 
+    def do_DELETE(self):
+        if self.headers["X-Token"] != self.token:
+            return self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
+        if (sub_path := self.get_subpath()) is None:
+            return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
+        target_path = os.path.join(self.data_dir, sub_path)
+        try:
+            shutil.rmtree(target_path)
+        except Exception as e:
+            return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
+        self.send_status_only(
+            http.HTTPStatus.NO_CONTENT, f"Resource /{sub_path}/ deleted"
+        )
+
     def get_subpath(self) -> str | None:
         if (match := re.match(r"^\/(\w+)\/$", self.path)) is not None:
             return match.group(1)
