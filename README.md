@@ -17,7 +17,7 @@ options:
 ## TODO
 
 - [x] basic http server
-- [ ] docker container
+- [x] docker container
 - [ ] env instead of args when available
 - [ ] POST gzip data into /data/xxx
 - [ ] DELETE request
@@ -43,11 +43,16 @@ ruff-fix             ruff check (and fix)
 ruff-format          ruff format
 ruff-format-check    ruff format (check only)
 ty                   ty check
+docker-build         docker build
+docker-run           docker run
 format               format project
 lint                 lint project
+start                start server in localhost
 
 Environment:
 UV = uv
 RUFF = uv run ruff
 TY = uv run ty
+DOCKER = docker
+DOCKER_TAG = localhost/stapler:latest
 ```

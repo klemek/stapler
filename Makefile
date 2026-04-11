@@ -8,6 +8,8 @@ endif
 
 RUFF ?= $(UV) run ruff
 TY ?= $(UV) run ty
+DOCKER ?= docker
+DOCKER_TAG ?= localhost/stapler:latest
 
 # DOCS
 
@@ -52,6 +54,14 @@ ruff-format-check: .venv ## ruff format (check only)
 ty: .venv ## ty check
 	@$(TY) check
 
+.PHONY: docker-build
+docker-build: ## docker build
+	@$(DOCKER) build . -t $(DOCKER_TAG)
+
+.PHONY: docker-run
+docker-run: docker-build ## docker run
+	@$(DOCKER) run -it -p 8080:8080 -v ./data:/app/data $(DOCKER_TAG)
+
 # ACTIONS
 
 .PHONY: format
@@ -59,3 +69,6 @@ format: ruff-fix ruff-format ## format project
 
 .PHONY: lint
 lint: ruff ruff-format-check ty ## lint project
+
+.PHONY: start
+start: docker-run ## start server in localhost
