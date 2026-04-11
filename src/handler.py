@@ -30,7 +30,10 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
     def translate_path(self, path: str) -> str:
         if (page := self.registry.get_from_host(self.get_host())) is not None:
             path = f"/{page.path}" + path
-        return super().translate_path(path)
+        path = super().translate_path(path)
+        if os.path.basename(path).startswith("."):  # hidden files
+            return ""
+        return path
 
     def do_GET(self):
         if self.path == "/" and self.get_host() == self.default_host:

@@ -63,9 +63,7 @@ curl -X DELETE \
 - [x] max file size
 - [x] .host in /data/xxx can be translated as host in GET /
 - [x] header to setup .host file instead of in archive
-- [ ] ignore .gitignore/.host etc at root
-- [ ] log visits (and store accross sessions)
-- [ ] deliver visits in /page/visits
+- [x] ignore .gitignore/.host etc at root
 - [ ] cerbot install in container + path env/arg
 - [ ] redirect /.well-known/acme-challenge to specific path
 - [ ] certbot/self-signed create/renew in specific dir
@@ -73,6 +71,8 @@ curl -X DELETE \
 - [ ] https mode w/ multiple hosts
 - [ ] restart command (on new/deleted host)
 - [ ] proper doc
+- [ ] log visits (and store accross sessions)
+- [ ] deliver visits in /page/visits
 
 ## Makefile targets
 
