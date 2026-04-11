@@ -10,6 +10,7 @@ RUFF ?= $(UV) run ruff
 TY ?= $(UV) run ty
 DOCKER ?= docker
 DOCKER_TAG ?= localhost/stapler:latest
+TOKEN ?= secret
 
 # DOCS
 
@@ -60,7 +61,7 @@ docker-build: ## docker build
 
 .PHONY: docker-run
 docker-run: docker-build ## docker run
-	@$(DOCKER) run -it -p 8080:8080 -v ./data:/app/data $(DOCKER_TAG)
+	@$(DOCKER) run -it -p 8080:8080 -v ./data:/data $(DOCKER_TAG) --token $(TOKEN)
 
 # ACTIONS
 

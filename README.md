@@ -1,24 +1,25 @@
 # Stapler
 
 ```txt
-usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] [-b BIND]
+usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] [-b BIND] [-t TOKEN]
 
 Static pages as simple as a gzip file
 
 options:
   -h, --help            show this help message and exit
-  -p, --port PORT       server port (default: 8080)
-  --host HOST           server default host (default: localhost)
+  -p, --port PORT       server port (default: 8080) (env var: PORT)
+  --host HOST           server default host (default: localhost) (env var: HOST)
   -d, --data-dir DATA_DIR
-                        directory where files are/will be stored
-  -b, --bind BIND       server bind address (default: 0.0.0.0)
+                        directory where files are/will be stored (default: ./data) (env var: DATA_DIR)
+  -b, --bind BIND       server bind address (default: 0.0.0.0) (env var: BIND)
+  -t, --token TOKEN     secret token for update requests (env var: TOKEN)
 ```
 
 ## TODO
 
 - [x] basic http server
 - [x] docker container
-- [ ] env instead of args when available
+- [x] env instead of args when available
 - [ ] POST gzip data into /data/xxx
 - [ ] DELETE request
 - [ ] CNAME in /data/xxx can be translated as host in GET /

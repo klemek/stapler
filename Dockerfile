@@ -2,7 +2,12 @@ FROM python:3.14-alpine
 
 WORKDIR /app
 
-VOLUME [ "/app/data" ]
+VOLUME [ "/data" ]
+
+ENV HOST=localhost
+ENV PORT=8080
+ENV BIND=0.0.0.0
+ENV DATA_DIR=/data
 
 RUN PIP_ROOT_USER_ACTION=ignore python3 -m pip install uv
 
