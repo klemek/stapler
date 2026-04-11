@@ -2,6 +2,8 @@ import os
 
 from . import params, page
 
+_HOST_FILE = ".host"
+
 
 class Registry:
     def __init__(self, params: params.Parameters):
@@ -22,12 +24,18 @@ class Registry:
             )
             print("Updated: " + self.prefix + str(self.pages[path]))
 
+    def set_host(self, path: str, host: str):
+        path_host = os.path.join(self.data_dir, path, _HOST_FILE)
+        with open(path_host, mode="w") as host_file:
+            host_file.write(host)
+        self.pages[path].host = host
+
     def __has_index(self, path: str) -> bool:
         path_index = os.path.join(self.data_dir, path, "index.html")
         return os.path.exists(path_index) and os.path.isfile(path_index)
 
     def __get_host(self, path: str) -> str | None:
-        path_host = os.path.join(self.data_dir, path, ".host")
+        path_host = os.path.join(self.data_dir, path, _HOST_FILE)
         if os.path.exists(path_host) and os.path.isfile(path_host):
             try:
                 with open(path_host) as host_file:

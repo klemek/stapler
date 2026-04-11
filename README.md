@@ -26,11 +26,18 @@ PUT /{page}/
 ```
 
 ```bash
-# create archive from 'dist' dir and upload to /target/
+# create archive from 'dist' dir and upload to /my-project/
 tar -czC dist . | curl -X PUT \
   --data-binary @- \
   -H 'X-Token: <TOKEN>' \
-  http://stapler-host/target/
+  http://stapler-host/my-project/
+
+# create archive from 'dist' dir and upload to /my-project/ and myproject.example.com
+tar -czC dist . | curl -X PUT \
+  --data-binary @- \
+  -H 'X-Token: <TOKEN>' \
+  -H 'X-Host: myproject.example.com' \
+  http://stapler-host/my-project/
 ```
 
 ### Delete page
@@ -40,10 +47,10 @@ DELETE /{page}/
 ```
 
 ```bash
-# delete /target/
+# delete /my-project/
 curl -X DELETE \
   -H 'X-Token: <TOKEN>' \
-  http://stapler-host/target/
+  http://stapler-host/my-project/
 ```
 
 ## TODO
@@ -55,10 +62,10 @@ curl -X DELETE \
 - [x] DELETE request
 - [x] max file size
 - [x] .host in /data/xxx can be translated as host in GET /
-- [ ] header to setup .host file instead of in archive
+- [x] header to setup .host file instead of in archive
+- [ ] ignore .gitignore/.host etc at root
 - [ ] log visits (and store accross sessions)
 - [ ] deliver visits in /page/visits
-- [ ] ignore gitignore/.host etc at root
 - [ ] cerbot install in container + path env/arg
 - [ ] redirect /.well-known/acme-challenge to specific path
 - [ ] certbot/self-signed create/renew in specific dir

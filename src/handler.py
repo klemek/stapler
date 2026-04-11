@@ -61,6 +61,8 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.send_status_only(http.HTTPStatus.CREATED, f"Resource /{sub_path}/ updated")
+        if self.headers["X-Host"]:
+            self.registry.set_host(sub_path, self.headers["X-Host"])
         self.registry.add(sub_path)
 
     def do_DELETE(self):
