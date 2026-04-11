@@ -54,8 +54,11 @@ curl -X DELETE \
 - [x] PUT gzip data into /data/xxx
 - [x] DELETE request
 - [x] max file size
-- [ ] CNAME in /data/xxx can be translated as host in GET /
-- [ ] header to setup CNAME file instead of in archive
+- [x] .host in /data/xxx can be translated as host in GET /
+- [ ] header to setup .host file instead of in archive
+- [ ] log visits (and store accross sessions)
+- [ ] deliver visits in /page/visits
+- [ ] ignore gitignore/.host etc at root
 - [ ] cerbot install in container + path env/arg
 - [ ] redirect /.well-known/acme-challenge to specific path
 - [ ] certbot/self-signed create/renew in specific dir

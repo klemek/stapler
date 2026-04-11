@@ -6,23 +6,31 @@ import io
 import os
 import shutil
 
-from . import project, params
+from . import project, params, registry
 
 
 class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
     protocol_version = "HTTP/2.0"
     server_version = "StaplerServer/" + project.get_version()
 
-    def __init__(self, *args, params: params.Parameters, **kwargs):
+    def __init__(
+        self, *args, params: params.Parameters, registry: registry.Registry, **kwargs
+    ):
         self.default_host = params.host
         self.token = params.token
         self.data_dir = params.data_dir
         self.max_size_bytes = params.max_size_bytes
+        self.registry = registry
         super().__init__(*args, directory=params.data_dir, **kwargs)
 
     def list_directory(self, *_, **__):
         """Disable default directory listing"""
         self.send_error(http.HTTPStatus.NOT_FOUND, "File not found")
+
+    def translate_path(self, path: str) -> str:
+        if (page := self.registry.get_from_host(self.get_host())) is not None:
+            path = f"/{page.path}" + path
+        return super().translate_path(path)
 
     def do_GET(self):
         if self.path == "/" and self.get_host() == self.default_host:
@@ -53,6 +61,7 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.send_status_only(http.HTTPStatus.CREATED, f"Resource /{sub_path}/ updated")
+        self.registry.add(sub_path)
 
     def do_DELETE(self):
         if self.headers["X-Token"] != self.token:
@@ -60,13 +69,16 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         if (sub_path := self.get_subpath()) is None:
             return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
         target_path = os.path.join(self.data_dir, sub_path)
+        if not os.path.exists(target_path):
+            return self.send_error(http.HTTPStatus.NOT_FOUND, "Not found")
         try:
             shutil.rmtree(target_path)
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.send_status_only(
-            http.HTTPStatus.NO_CONTENT, f"Resource /{sub_path}/ deleted"
+            http.HTTPStatus.NO_CONTENT, f"Resource /{sub_path}/ removed"
         )
+        self.registry.remove(sub_path)
 
     def get_subpath(self) -> str | None:
         if (match := re.match(r"^\/(\w+)\/$", self.path)) is not None:
