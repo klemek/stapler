@@ -13,6 +13,7 @@ class Parameters:
     data_dir: str
     bind: str
     token: str
+    max_size_bytes: int
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> "Parameters":
@@ -55,17 +56,23 @@ def parse_parameters() -> Parameters:
         help="directory where files are/will be stored (default: ./data) (env var: DATA_DIR)",
     )
     parser.add_argument(
-        "-b",
-        "--bind",
-        default=__get_env_str("BIND", "0.0.0.0"),
-        help="server bind address (default: 0.0.0.0) (env var: BIND)",
-    )
-    parser.add_argument(
         "-t",
         "--token",
         required=os.getenv("TOKEN") is None,
         default=os.getenv("TOKEN"),
         help="secret token for update requests (env var: TOKEN)",
+    )
+    parser.add_argument(
+        "--max-size-bytes",
+        type=int,
+        default=__get_env_int("MAX_SIZE", 2000000),
+        help="max size of accepted archives (in bytes) (default: 2000000 -> 2MB) (env var: MAX_SIZE)",
+    )
+    parser.add_argument(
+        "-b",
+        "--bind",
+        default=__get_env_str("BIND", "0.0.0.0"),
+        help="server bind address (default: 0.0.0.0) (env var: BIND)",
     )
     args = parser.parse_args()
     return Parameters.from_namespace(args)

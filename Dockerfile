@@ -8,6 +8,7 @@ ENV HOST=localhost
 ENV PORT=8080
 ENV BIND=0.0.0.0
 ENV DATA_DIR=/data
+ENV MAX_SIZE=2000000
 
 RUN PIP_ROOT_USER_ACTION=ignore python3 -m pip install uv
 

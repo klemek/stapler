@@ -1,7 +1,7 @@
 # Stapler
 
 ```txt
-usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] [-b BIND] [-t TOKEN]
+usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] -t TOKEN [--max-size-bytes MAX_SIZE_BYTES] [-b BIND]
 
 Static pages as simple as a gzip file
 
@@ -11,8 +11,10 @@ options:
   --host HOST           server default host (default: localhost) (env var: HOST)
   -d, --data-dir DATA_DIR
                         directory where files are/will be stored (default: ./data) (env var: DATA_DIR)
-  -b, --bind BIND       server bind address (default: 0.0.0.0) (env var: BIND)
   -t, --token TOKEN     secret token for update requests (env var: TOKEN)
+  --max-size-bytes MAX_SIZE_BYTES
+                        max size of accepted archives (in bytes) (default: 2000000 -> 2MB) (env var: MAX_SIZE)
+  -b, --bind BIND       server bind address (default: 0.0.0.0) (env var: BIND)
 ```
 
 ## Endpoints
@@ -51,7 +53,7 @@ curl -X DELETE \
 - [x] env instead of args when available
 - [x] PUT gzip data into /data/xxx
 - [x] DELETE request
-- [ ] max file size
+- [x] max file size
 - [ ] CNAME in /data/xxx can be translated as host in GET /
 - [ ] header to setup CNAME file instead of in archive
 - [ ] cerbot install in container + path env/arg

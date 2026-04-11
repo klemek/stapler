@@ -17,6 +17,7 @@ class _StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.default_host = params.host
         self.token = params.token
         self.data_dir = params.data_dir
+        self.max_size_bytes = params.max_size_bytes
         super().__init__(*args, directory=params.data_dir, **kwargs)
 
     def list_directory(self, *_, **__):
@@ -36,6 +37,8 @@ class _StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         content_length = int(self.headers["Content-Length"])
         if content_length == 0:
             return self.send_error(http.HTTPStatus.LENGTH_REQUIRED, "No body found")
+        if content_length > self.max_size_bytes:
+            return self.send_error(http.HTTPStatus.CONTENT_TOO_LARGE, "Archive too large")
         try:
             file_bytes = io.BytesIO(self.rfile.read(content_length))
             target_path = os.path.join(self.data_dir, sub_path)
