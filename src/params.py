@@ -53,7 +53,8 @@ def parse_parameters() -> Parameters:
         "-d",
         "--data-dir",
         default=__get_env_str("DATA_DIR", os.path.join(os.getcwd(), "data")),
-        help="directory where files are/will be stored (default: ./data) (env var: DATA_DIR)",
+        help="directory where files are/will be stored"
+        " (default: ./data) (env var: DATA_DIR)",
     )
     parser.add_argument(
         "-t",
@@ -66,7 +67,8 @@ def parse_parameters() -> Parameters:
         "--max-size-bytes",
         type=int,
         default=__get_env_int("MAX_SIZE", 2000000),
-        help="max size of accepted archives (in bytes) (default: 2000000 -> 2MB) (env var: MAX_SIZE)",
+        help="max size of accepted archives (in bytes)"
+        " (default: 2000000 -> 2MB) (env var: MAX_SIZE)",
     )
     parser.add_argument(
         "-b",

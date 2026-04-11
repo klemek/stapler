@@ -14,3 +14,7 @@ dev = [
     "ruff>=0.15.10",
     "ty>=0.0.29",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "C", "W"]
+ignore = []
