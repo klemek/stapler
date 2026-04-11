@@ -1,0 +1,53 @@
+# Stapler
+
+```txt
+usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] [-b BIND]
+
+Static pages as simple as a gzip file
+
+options:
+  -h, --help            show this help message and exit
+  -p, --port PORT       server port (default: 8080)
+  --host HOST           server default host (default: localhost)
+  -d, --data-dir DATA_DIR
+                        directory where files are/will be stored
+  -b, --bind BIND       server bind address (default: 0.0.0.0)
+```
+
+## TODO
+
+- [x] basic http server
+- [ ] docker container
+- [ ] env instead of args when available
+- [ ] POST gzip data into /data/xxx
+- [ ] DELETE request
+- [ ] CNAME in /data/xxx can be translated as host in GET /
+- [ ] PUT to write CNAME file
+- [ ] cerbot install in container + path env/arg
+- [ ] redirect /.well-known/acme-challenge to specific path
+- [ ] certbot/self-signed create/renew in specific dir
+- [ ] renew command
+- [ ] https mode w/ multiple hosts
+- [ ] restart command (on new/deleted host)
+- [ ] proper doc
+
+## Makefile targets
+
+```txt
+Usage: make [target1] (target2) ...
+
+Commands/Targets:
+help                 show this message
+ruff                 ruff check
+ruff-fix             ruff check (and fix)
+ruff-format          ruff format
+ruff-format-check    ruff format (check only)
+ty                   ty check
+format               format project
+lint                 lint project
+
+Environment:
+UV = uv
+RUFF = uv run ruff
+TY = uv run ty
+```
