@@ -15,15 +15,32 @@ options:
   -t, --token TOKEN     secret token for update requests (env var: TOKEN)
 ```
 
+## Endpoints
+
+### Create/update page
+
+```txt
+PUT /{page}/
+```
+
+```bash
+# create archive from 'dist' dir and upload to /target/
+tar -czC dist . | curl -X PUT \
+  --data-binary @- \
+  -H 'X-Token: <TOKEN>' \
+  http://stapler-host/target/
+```
+
 ## TODO
 
 - [x] basic http server
 - [x] docker container
 - [x] env instead of args when available
-- [ ] POST gzip data into /data/xxx
-- [ ] DELETE request
+- [x] PUT gzip data into /data/xxx
+- [x] DELETE request
+- [ ] max file size
 - [ ] CNAME in /data/xxx can be translated as host in GET /
-- [ ] PUT to write CNAME file
+- [ ] header to setup CNAME file instead of in archive
 - [ ] cerbot install in container + path env/arg
 - [ ] redirect /.well-known/acme-challenge to specific path
 - [ ] certbot/self-signed create/renew in specific dir
