@@ -4,6 +4,8 @@ import os
 
 from . import project
 
+__EPILOG = "(Each option can be supplied with equivalent environment variable.)"
+
 
 @dataclasses.dataclass(frozen=True)
 class Parameters:
@@ -19,6 +21,7 @@ class Parameters:
     with_certbot: bool
     with_certificates: bool
     https: bool
+    command: str
     debug: bool
 
     @classmethod
@@ -89,23 +92,11 @@ def parse_parameters() -> Parameters:
     parser = argparse.ArgumentParser(
         project.get_name(),
         description=project.get_description(),
-        epilog="(Each option can be supplied with equivalent environment variable.)",
+        epilog=__EPILOG,
+        suggest_on_error=True,
     )
-    __add_arg_int(
-        parser,
-        "-p",
-        "--port",
-        env_var="PORT",
-        default=8080,
-        help_txt="server port",
-    )
-    __add_arg_str(
-        parser,
-        "--host",
-        env_var="HOST",
-        default="localhost:8080",
-        help_txt="server default host",
-    )
+    subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
+    parser.add_argument("--debug", action=argparse.BooleanOptionalAction)
     __add_arg_str(
         parser,
         "-d",
@@ -114,27 +105,26 @@ def parse_parameters() -> Parameters:
         default="./data",
         help_txt="directory where pages are/will be stored",
     )
-    __add_arg_str_required(
-        parser,
-        "-t",
-        "--token",
-        env_var="TOKEN",
-        help_txt="secret token for update requests",
+    parser.add_argument(
+        "--certificates",
+        action=argparse.BooleanOptionalAction,
+        help="Handle certificates (default: true)",
+        default=True,
+        dest="with_certificates",
     )
-    __add_arg_int(
-        parser,
-        "--max-size-bytes",
-        env_var="MAX_SIZE",
-        default=2_000_000,
-        help_txt="max size of accepted archives (in bytes)",
+    parser.add_argument(
+        "--certbot",
+        action=argparse.BooleanOptionalAction,
+        help="Use Certbot (default: true)",
+        default=True,
+        dest="with_certbot",
     )
     __add_arg_str(
         parser,
-        "-b",
-        "--bind",
-        env_var="BIND",
-        default="0.0.0.0",
-        help_txt="server bind address",
+        "--self-signed-path",
+        env_var="SELF_SIGNED_PATH",
+        default="./data/.certificates",
+        help_txt="Self-signed certificates dir",
     )
     __add_arg_str(
         parser,
@@ -150,33 +140,55 @@ def parse_parameters() -> Parameters:
         default="./data/.certbot",
         help_txt="Certbot www dir",
     )
+
+    run_parser = subparsers.add_parser(
+        "run",
+        help="Run Stapler server",
+        description="Run Stapler server",
+        epilog=__EPILOG,
+    )
     __add_arg_str(
-        parser,
-        "--self-signed-path",
-        env_var="SELF_SIGNED_PATH",
-        default="./data/.certificates",
-        help_txt="Self-signed certificates dir",
+        run_parser,
+        "--host",
+        env_var="HOST",
+        default="localhost:8080",
+        help_txt="server default host",
     )
-    parser.add_argument("--debug", action=argparse.BooleanOptionalAction)
-    parser.add_argument(
-        "--certbot",
-        action=argparse.BooleanOptionalAction,
-        help="Use Certbot (default: false)",
-        default=False,
-        dest="with_certbot",
+    __add_arg_int(
+        run_parser,
+        "-p",
+        "--port",
+        env_var="PORT",
+        default=8080,
+        help_txt="server port",
     )
-    parser.add_argument(
-        "--certificates",
-        action=argparse.BooleanOptionalAction,
-        help="Handle certificates (default: true)",
-        default=True,
-        dest="with_certificates",
-    )
-    parser.add_argument(
+    run_parser.add_argument(
         "--https",
         action=argparse.BooleanOptionalAction,
         help="Use https (implies --certificates) (default: true)",
         default=True,
+    )
+    __add_arg_str_required(
+        run_parser,
+        "-t",
+        "--token",
+        env_var="TOKEN",
+        help_txt="secret token for update requests",
+    )
+    __add_arg_int(
+        run_parser,
+        "--max-size-bytes",
+        env_var="MAX_SIZE",
+        default=2_000_000,
+        help_txt="max size of accepted archives (in bytes)",
+    )
+    __add_arg_str(
+        run_parser,
+        "-b",
+        "--bind",
+        env_var="BIND",
+        default="0.0.0.0",
+        help_txt="server bind address",
     )
     args = parser.parse_args()
     if args.https:

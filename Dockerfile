@@ -26,4 +26,4 @@ RUN uv sync --no-dev
 COPY main.py ./
 COPY src ./src/
 
-ENTRYPOINT [ "uv", "run", "--no-sync", "main.py" ]
+ENTRYPOINT [ "uv", "run", "--no-sync", "main.py"]

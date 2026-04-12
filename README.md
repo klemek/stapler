@@ -1,24 +1,49 @@
 # Stapler
 
 ```txt
-usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] -t TOKEN [--max-size-bytes MAX_SIZE] [-b BIND] [--certbot-conf CERTBOT_CONF] [--certbot-www CERTBOT_WWW]
+usage: stapler [-h] [--debug | --no-debug] [-d DATA_DIR] [--certificates | --no-certificates] [--certbot | --no-certbot] [--self-signed-path SELF_SIGNED_PATH] [--certbot-conf CERTBOT_CONF]
+               [--certbot-www CERTBOT_WWW]
+               COMMAND ...
 
 Static pages as simple as a gzip file
 
+positional arguments:
+  COMMAND
+    run                 Run Stapler server
+
 options:
   -h, --help            show this help message and exit
-  -p, --port PORT       server port (default: 8080)
-  --host HOST           server default host (default: localhost)
+  --debug, --no-debug
   -d, --data-dir DATA_DIR
                         directory where pages are/will be stored (default: ./data)
-  -t, --token TOKEN     secret token for update requests
-  --max-size-bytes MAX_SIZE
-                        max size of accepted archives (in bytes) (default: 2000000)
-  -b, --bind BIND       server bind address (default: 0.0.0.0)
+  --certificates, --no-certificates
+                        Handle certificates (default: true)
+  --certbot, --no-certbot
+                        Use Certbot (default: true)
+  --self-signed-path SELF_SIGNED_PATH
+                        Self-signed certificates dir (default: ./data/.certificates)
   --certbot-conf CERTBOT_CONF
                         Certbot config dir (default: /etc/letsencrypt)
   --certbot-www CERTBOT_WWW
                         Certbot www dir (default: ./data/.certbot)
+
+(Each option can be supplied with equivalent environment variable.)
+```
+
+```txt
+usage: stapler run [-h] [--host HOST] [-p PORT] [--https | --no-https] -t TOKEN [--max-size-bytes MAX_SIZE] [-b BIND]
+
+Run Stapler server
+
+options:
+  -h, --help            show this help message and exit
+  --host HOST           server default host (default: localhost:8080)
+  -p, --port PORT       server port (default: 8080)
+  --https, --no-https   Use https (implies --certificates) (default: true)
+  -t, --token TOKEN     secret token for update requests
+  --max-size-bytes MAX_SIZE
+                        max size of accepted archives (in bytes) (default: 2000000)
+  -b, --bind BIND       server bind address (default: 0.0.0.0)
 
 (Each option can be supplied with equivalent environment variable.)
 ```
