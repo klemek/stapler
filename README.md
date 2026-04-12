@@ -75,7 +75,7 @@ curl -X DELETE \
 - [x] cerbot install in container + path env/arg
 - [x] redirect /.well-known/acme-challenge to specific path
 - [ ] certbot/self-signed create/renew in specific dir
-- [ ] better logger
+- [x] better logger
 - [ ] renew command
 - [ ] https mode w/ multiple hosts
 - [ ] restart command (on new/deleted host)
@@ -83,6 +83,7 @@ curl -X DELETE \
 - [ ] log visits (and store accross sessions)
 - [ ] deliver visits in /page/visits
 - [x] better error page
+- [ ] add favicon.ico + special path
 
 ### Makefile targets
 

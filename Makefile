@@ -62,7 +62,7 @@ docker-build: ## docker build
 
 .PHONY: docker-run
 docker-run: docker-build ## docker run
-	@$(DOCKER) run -it -p $(PORT):8080 -v ./data:/data $(DOCKER_TAG) --token $(TOKEN)
+	@$(DOCKER) run -it -p $(PORT):8080 -v ./data:/data $(DOCKER_TAG) --token $(TOKEN) --host localhost:$(PORT) --debug
 
 # ACTIONS
 

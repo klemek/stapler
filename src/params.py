@@ -16,6 +16,7 @@ class Parameters:
     max_size_bytes: int
     certbot_conf: str
     certbot_www: str
+    debug: bool
 
     @classmethod
     def from_namespace(cls, args: argparse.Namespace) -> "Parameters":
@@ -83,7 +84,7 @@ def parse_parameters() -> Parameters:
         parser,
         "--host",
         env_var="HOST",
-        default="localhost",
+        default="localhost:8080",
         help="server default host",
     )
     __add_arg_str(
@@ -130,5 +131,6 @@ def parse_parameters() -> Parameters:
         default=os.path.join(".", "data", ".certbot"),
         help="Certbot www dir",
     )
+    parser.add_argument("--debug", action=argparse.BooleanOptionalAction)
     args = parser.parse_args()
     return Parameters.from_namespace(args)

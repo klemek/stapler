@@ -4,11 +4,12 @@ import tarfile
 import re
 import io
 import os
+import logging
 
-from . import project, params, registry, data_dir
+from . import project, params, registry, data_dir, logs
 
 
-class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
+class RequestHandler(http.server.SimpleHTTPRequestHandler):
     protocol_version = "HTTP/2.0"
     server_version = "StaplerServer/" + project.get_version()
     CERTBOT_CHALLENGE_PATH = "/.well-known/acme-challenge"
@@ -17,13 +18,70 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(
         self, *args, params: params.Parameters, registry: registry.Registry, **kwargs
     ):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.default_host = params.host
         self.token = params.token
         self.data_dir = data_dir.DataDir(params.data_dir)
         self.max_size_bytes = params.max_size_bytes
         self.registry = registry
         self.certbot_www = os.path.realpath(params.certbot_www)
+        self.out_size = 0
         super().__init__(*args, directory=params.data_dir, **kwargs)
+
+    def log_message(self, format: str, *args):
+        self.logger.info("%s - " + format, self.address_string(), *args)
+
+    def log_error(self, format: str, *args):
+        self.logger.error("%s - " + format, self.address_string(), *args)
+
+    def log_request(self, code="?", size=""):
+        if isinstance(code, http.HTTPStatus):
+            color = logs.TermColor.RED
+            if 100 <= code < 200:
+                color = logs.TermColor.CYAN
+            if 200 <= code < 300:
+                color = logs.TermColor.GREEN
+            elif 300 <= code < 400:
+                color = logs.TermColor.BLUE
+            elif 400 <= code < 500:
+                color = logs.TermColor.YELLOW
+            code = color + str(code.value) + logs.TermColor.RESET
+        if size == "" and self.out_size > 0:
+            size = str(self.out_size)
+        if size != "":
+            self.logger.info(
+                "→ %s - %s - %s - %s - %s",
+                code,
+                self.address_string(),
+                self.__get_host(),
+                self.requestline,
+                size,
+            )
+        else:
+            self.logger.info(
+                "→ %s - %s - %s - %s",
+                code,
+                self.address_string(),
+                self.__get_host(),
+                self.requestline,
+            )
+
+    def pre_log_request(self):
+        if (size := self.__get_length()) > 0:
+            self.logger.debug(
+                "← ... - %s - %s - %s - %d",
+                self.address_string(),
+                self.__get_host(),
+                self.requestline,
+                size,
+            )
+        else:
+            self.logger.debug(
+                "← ... - %s - %s - %s",
+                self.address_string(),
+                self.__get_host(),
+                self.requestline,
+            )
 
     def list_directory(self, *_, **__):
         """Disable default directory listing"""
@@ -32,30 +90,32 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
     def translate_path(self, path: str) -> str:
         if path.startswith(self.CERTBOT_CHALLENGE_PATH):
             return self.certbot_www + path.removeprefix(self.CERTBOT_CHALLENGE_PATH)
-        if (page := self.registry.get_from_host(self.get_host())) is not None:
+        if (page := self.registry.get_from_host(self.__get_host())) is not None:
             path = f"/{page.path}" + path
         path = super().translate_path(path)
-        if self.get_subpath(match_full=False) is None:  # not a valid path
+        if self.__get_subpath(match_full=False) is None:  # not a valid path
             return ""
         if os.path.basename(path).startswith("."):  # hidden files
             return ""
         return path
 
+    def do_HEAD(self):
+        self.pre_log_request()
+        super().do_HEAD()
+
     def do_GET(self):
-        if self.path == "/" and self.get_host() == self.default_host:
-            return self.server_index()
+        self.pre_log_request()
+        if self.path == "/" and self.__get_host() == self.default_host:
+            return self.__server_index()
         super().do_GET()
 
     def do_PUT(self):
+        self.pre_log_request()
         if self.headers["X-Token"] != self.token:
             return self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
-        if (sub_path := self.get_subpath()) is None:
+        if (sub_path := self.__get_subpath()) is None:
             return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
-        if not self.headers["Content-Length"]:
-            content_length = 0
-        else:
-            content_length = int(self.headers["Content-Length"])
-        if content_length == 0:
+        if (content_length := self.__get_length()) == 0:
             return self.send_error(http.HTTPStatus.LENGTH_REQUIRED, "No body found")
         if content_length > self.max_size_bytes:
             return self.send_error(
@@ -68,15 +128,18 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
             return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid tar archive")
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
-        self.send_status_only(http.HTTPStatus.CREATED, f"Resource /{sub_path}/ updated")
+        self.__send_status_only(
+            http.HTTPStatus.CREATED, f"Resource /{sub_path}/ updated"
+        )
         if self.headers["X-Host"] is not None:
             self.registry.set_host(sub_path, self.headers["X-Host"])
         self.registry.add(sub_path)
 
     def do_DELETE(self):
+        self.pre_log_request()
         if self.headers["X-Token"] != self.token:
             return self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
-        if (sub_path := self.get_subpath()) is None:
+        if (sub_path := self.__get_subpath()) is None:
             return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
         if not self.data_dir.exists(sub_path):
             return self.send_error(http.HTTPStatus.NOT_FOUND, "Not found")
@@ -84,12 +147,12 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.data_dir.remove(sub_path)
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
-        self.send_status_only(
+        self.__send_status_only(
             http.HTTPStatus.NO_CONTENT, f"Resource /{sub_path}/ removed"
         )
         self.registry.remove(sub_path)
 
-    def get_subpath(self, match_full: bool = True) -> str | None:
+    def __get_subpath(self, match_full: bool = True) -> str | None:
         if match_full:
             match = self.PATH_REGEX.fullmatch(self.path)
         else:
@@ -98,15 +161,21 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
             return match.group(1)
         return None
 
-    def get_host(self) -> str:
+    def __get_host(self) -> str:
         if self.headers["Host"] is None:
             return self.default_host
-        return self.headers["Host"].split(":")[0]
+        return self.headers["Host"]
 
-    def server_index(self):
-        self.send_basic_body(self.server_version + "\n")
+    def __get_length(self) -> int:
+        if not self.headers["Content-Length"]:
+            return 0
+        else:
+            return int(self.headers["Content-Length"])
 
-    def send_basic_body(
+    def __server_index(self):
+        self.__send_basic_body(self.server_version + "\n")
+
+    def __send_basic_body(
         self,
         body: str,
         content_type: str = "text/plain",
@@ -114,13 +183,14 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         message: str | None = None,
     ):
         encoded: bytes = body.encode()
+        self.out_size = len(encoded)
         self.send_response(code, message)
         self.send_header("Content-type", f"{content_type}; charset=UTF-8")
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
 
-    def send_status_only(self, code: int, message: str | None = None):
+    def __send_status_only(self, code: int, message: str | None = None):
         self.send_response(code, message)
         self.send_header("Content-Length", "0")
         self.end_headers()
@@ -134,10 +204,10 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         if explain is None:
             explain = longmsg
         if "Accept" not in self.headers["Accept"] or "text/" in self.headers["Accept"]:
-            self.send_basic_body(
+            self.__send_basic_body(
                 f"{code} {message}\n{explain}\n{self.server_version}",
                 code=code,
                 message=message,
             )
         else:
-            self.send_status_only(code, message)
+            self.__send_status_only(code, message)

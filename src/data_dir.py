@@ -3,6 +3,7 @@ import io
 import tarfile
 import shutil
 import re
+import logging
 
 
 class DataDir:
@@ -10,6 +11,7 @@ class DataDir:
     PATH_REGEX = re.compile(r"^[\w-]+$")
 
     def __init__(self, root_path: str):
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.root_path = root_path
 
     def list_paths(self) -> list[str]:
@@ -29,6 +31,7 @@ class DataDir:
             path_host = os.path.join(self.root_path, path, self.HOST_FILE)
             with open(path_host, mode="w") as host_file:
                 host_file.write(host)
+            self.logger.debug("Wrote %s", path_host)
 
     def has_index(self, path: str):
         if self.__valid_path(path):
@@ -52,12 +55,15 @@ class DataDir:
             with tarfile.open(fileobj=tar_bytes) as tar_file:
                 if os.path.exists(target_path):
                     shutil.rmtree(target_path)
+                    self.logger.debug("Deleted %s", target_path)
                 tar_file.extractall(target_path)
+                self.logger.debug("Extracted tar to %s", target_path)
 
     def remove(self, path: str):
         if self.__valid_path(path):
             target_path = os.path.join(self.root_path, path)
             shutil.rmtree(target_path)
+            self.logger.debug("Deleted %s", target_path)
 
     def exists(self, path: str):
         return self.__valid_path(path)
