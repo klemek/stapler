@@ -158,6 +158,9 @@ class CertManager:
             )
             self.logger.info("Created certbot certificate for %s", host)
             cert_path = self.certbot_conf / "live" / host
+            dest_cert_path = self.self_signed_path / host
+            if dest_cert_path.exists:
+                shutil.rmtree(dest_cert_path)
             cert_path.copy_into(self.self_signed_path, follow_symlinks=False)
             self.logger.debug("Copied certbot certificate to self certificates")
         except subprocess.CalledProcessError as e:
