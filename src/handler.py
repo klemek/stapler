@@ -84,7 +84,7 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.registry.remove(sub_path)
 
     def get_subpath(self) -> str | None:
-        if (match := re.match(r"^\/(\w+)\/$", self.path)) is not None:
+        if (match := re.match(r"^\/([\w-]+)\/$", self.path)) is not None:
             return match.group(1)
         return None
 
