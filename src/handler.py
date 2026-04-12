@@ -19,7 +19,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
     server_version = "StaplerServer/" + project.get_version()
     CERTBOT_CHALLENGE_PATH = "/.well-known/acme-challenge"
     PATH_REGEX = re.compile(r"^\/([\w-]+)\/")
-    HOST_PART_REGEX = re.compile(r"^[a-zA-Z0-9]*[a-zA-Z0-9][a-zA-Z0-9]$")
+    HOST_PART_REGEX = re.compile(r"^([a-zA-Z0-9]|[a-zA-Z0-9]*[a-zA-Z0-9][a-zA-Z0-9])$")
     HOST_PORT_REGEX = re.compile(r"^\d{2,5}$")
 
     @typing.override

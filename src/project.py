@@ -5,7 +5,7 @@ import toml
 
 
 def __get_project_data() -> None | dict[str, typing.Any]:
-    pyproject_toml_file = pathlib.Path(__file__) / ".." / ".." / "pyproject.toml"
+    pyproject_toml_file = pathlib.Path(__file__).parent.parent / "pyproject.toml"
     if pyproject_toml_file.is_file():
         try:
             data = toml.load(pyproject_toml_file)
