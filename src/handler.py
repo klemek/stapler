@@ -114,7 +114,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
     @typing.override
     def translate_path(self, path: str) -> str:
         if path.startswith(self.CERTBOT_CHALLENGE_PATH):
-            return self.certbot_www + path.removeprefix(self.CERTBOT_CHALLENGE_PATH)
+            return self.certbot_www + path
         if (page := self.registry.get_from_host(self.__get_host())) is not None:
             path = f"/{page.path}" + path
         elif (
