@@ -53,14 +53,14 @@ PUT /{page}/
 tar -czC dist . | curl -X PUT \
   --data-binary @- \
   -H 'X-Token: <TOKEN>' \
-  http://stapler-host/my-project/
+  https://stapler-host/my-project/
 
 # create archive from 'dist' dir and upload to /my-project/ and myproject.example.com
 tar -czC dist . | curl -X PUT \
   --data-binary @- \
   -H 'X-Token: <TOKEN>' \
   -H 'X-Host: myproject.example.com' \
-  http://stapler-host/my-project/
+  https://stapler-host/my-project/
 ```
 
 ### Delete page
@@ -73,7 +73,7 @@ DELETE /{page}/
 # delete /my-project/
 curl -X DELETE \
   -H 'X-Token: <TOKEN>' \
-  http://stapler-host/my-project/
+  https://stapler-host/my-project/
 ```
 
 ## Development
@@ -99,7 +99,7 @@ curl -X DELETE \
 - [x] certbot copy certificates for unique path
 - [x] better error page
 - [x] add favicon.ico + special path
-- [ ] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
+- [x] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
 - [ ] proper doc
 
 ### Makefile targets
