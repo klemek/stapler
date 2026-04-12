@@ -2,7 +2,8 @@ import enum
 import logging
 import typing
 
-from . import params
+if typing.TYPE_CHECKING:
+    from . import params
 
 
 class TermColor(enum.StrEnum):
@@ -24,11 +25,12 @@ class TermColor(enum.StrEnum):
     def __str__(self) -> str:
         return f"\033[{self.value}m"
 
-    def __add__(self, second):
-        return str(self) + str(second)
+    @typing.override
+    def __add__(self, value: typing.Any, /) -> str:  # ty:ignore[invalid-method-override]
+        return str(self) + str(value)
 
-    def __radd__(self, second):
-        return str(second) + str(self)
+    def __radd__(self, value: typing.Any, /) -> str:
+        return str(value) + str(self)
 
 
 class ColoredLoggingFormatter(logging.Formatter):
@@ -42,7 +44,7 @@ class ColoredLoggingFormatter(logging.Formatter):
         + TermColor.RESET
     )
 
-    FORMAT_COLORS = {
+    FORMAT_COLORS: typing.ClassVar[dict[int, TermColor | str]] = {
         logging.DEBUG: TermColor.FEINT + TermColor.GREY,
         logging.INFO: TermColor.GREEN,
         logging.WARNING: TermColor.YELLOW,
@@ -51,16 +53,15 @@ class ColoredLoggingFormatter(logging.Formatter):
     }
 
     @typing.override
-    def __init__(self, trace: bool):
+    def __init__(self, trace: bool) -> None:
         self.trace = trace
         super().__init__()
 
     @typing.override
-    def format(self, record: logging.LogRecord):
-        log_color: TermColor = (
-            self.FORMAT_COLORS[record.levelno]
-            if record.levelno in self.FORMAT_COLORS
-            else TermColor.MAGENTA
+    def format(self, record: logging.LogRecord) -> str:
+        log_color: TermColor | str = self.FORMAT_COLORS.get(
+            record.levelno,
+            TermColor.MAGENTA,
         )
         formatter = logging.Formatter(
             self.pre_format
@@ -69,12 +70,12 @@ class ColoredLoggingFormatter(logging.Formatter):
             + self.level_format
             + TermColor.RESET
             + self.post_format
-            + (self.trace_format if self.trace else "")
+            + (self.trace_format if self.trace else ""),
         )
         return formatter.format(record)
 
 
-def setup_logs(params: params.Parameters):
+def setup_logs(params: params.Parameters) -> None:
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(ColoredLoggingFormatter(trace=params.debug))
     log_level = logging.INFO

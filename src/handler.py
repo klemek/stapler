@@ -3,11 +3,15 @@ import http.server
 import io
 import logging
 import os
+import pathlib
 import re
 import tarfile
 import typing
 
-from . import data_dir, logs, params, project, registry
+from . import data_dir, logs, project
+
+if typing.TYPE_CHECKING:
+    from . import params, registry
 
 
 class RequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -18,8 +22,12 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
 
     @typing.override
     def __init__(
-        self, *args, params: params.Parameters, registry: registry.Registry, **kwargs
-    ):
+        self,
+        *args: typing.Any,
+        params: params.Parameters,
+        registry: registry.Registry,
+        **kwargs: dict[str, typing.Any],
+    ) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.default_host = params.host
         self.token = params.token
@@ -31,28 +39,28 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=params.data_dir, **kwargs)
 
     @typing.override
-    def do_HEAD(self):
+    def do_HEAD(self) -> None:
         self.__pre_log_request()
         super().do_HEAD()
 
     @typing.override
-    def do_GET(self):
+    def do_GET(self) -> None:
         self.__pre_log_request()
         if self.path == "/" and self.__get_host() == self.default_host:
             return self.__server_index()
         super().do_GET()
+        return None
 
-    def do_PUT(self):
+    def do_PUT(self) -> None:
         self.__pre_log_request()
-        if self.headers["X-Token"] != self.token:
-            return self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
-        if (sub_path := self.__get_subpath()) is None:
-            return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
+        if (sub_path := self.__check_update_request()) is None:
+            return None
         if (content_length := self.__get_length()) == 0:
             return self.send_error(http.HTTPStatus.LENGTH_REQUIRED, "No body found")
         if content_length > self.max_size_bytes:
             return self.send_error(
-                http.HTTPStatus.CONTENT_TOO_LARGE, "Archive too large"
+                http.HTTPStatus.CONTENT_TOO_LARGE,
+                "Archive too large",
             )
         try:
             file_bytes = io.BytesIO(self.rfile.read(content_length))
@@ -62,32 +70,35 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.__send_status_only(
-            http.HTTPStatus.CREATED, f"Resource /{sub_path}/ updated"
+            http.HTTPStatus.CREATED,
+            f"Resource /{sub_path}/ updated",
         )
         if self.headers["X-Host"] is not None:
             self.registry.set_host(sub_path, self.headers["X-Host"])
         self.registry.add(sub_path)
+        return None
 
-    def do_DELETE(self):
+    def do_DELETE(self) -> None:
         self.__pre_log_request()
-        if self.headers["X-Token"] != self.token:
-            return self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
-        if (sub_path := self.__get_subpath()) is None:
-            return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
+        if (sub_path := self.__check_update_request()) is None:
+            return None
         if not self.data_dir.exists(sub_path):
-            return self.send_error(http.HTTPStatus.NOT_FOUND, "Not found")
+            self.send_error(http.HTTPStatus.NOT_FOUND, "Not found")
+            return None
         try:
             self.data_dir.remove(sub_path)
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.__send_status_only(
-            http.HTTPStatus.NO_CONTENT, f"Resource /{sub_path}/ removed"
+            http.HTTPStatus.NO_CONTENT,
+            f"Resource /{sub_path}/ removed",
         )
         self.registry.remove(sub_path)
+        return None
 
     @typing.override
-    def list_directory(self, *_, **__):
-        """Disable default directory listing"""
+    def list_directory(self, *_: typing.Any, **__: typing.Any) -> None:
+        """Disable default directory listing."""
         self.send_error(http.HTTPStatus.NOT_FOUND, "File not found")
 
     @typing.override
@@ -97,16 +108,19 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         if (page := self.registry.get_from_host(self.__get_host())) is not None:
             path = f"/{page.path}" + path
         path = super().translate_path(path)
-        if self.__get_subpath(match_full=False) is None:  # not a valid path
+        if self.__get_subpath() is None:  # not a valid path
             return ""
-        if os.path.basename(path).startswith("."):  # hidden files
+        if pathlib.Path(path).name.startswith("."):  # hidden files
             return ""
         return path
 
     @typing.override
     def send_error(
-        self, code: int, message: str | None = None, explain: str | None = None
-    ):
+        self,
+        code: int,
+        message: str | None = None,
+        explain: str | None = None,
+    ) -> None:
         shortmsg, longmsg = self.responses[code]
         if message is None:
             message = shortmsg
@@ -122,15 +136,17 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.__send_status_only(code, message)
 
     @typing.override
-    def log_message(self, format: str, *args):
-        self.logger.info("%s - " + format, self.address_string(), *args)
+    def log_message(self, format: str, *args: typing.Any) -> None:
+        fmt = "%s - " + format
+        self.logger.info(fmt, self.address_string(), *args)
 
     @typing.override
-    def log_error(self, format: str, *args):
-        self.logger.error("%s - " + format, self.address_string(), *args)
+    def log_error(self, format: str, *args: typing.Any) -> None:
+        fmt = "%s - " + format
+        self.logger.error(fmt, self.address_string(), *args)
 
     @typing.override
-    def log_request(self, code="?", size=""):
+    def log_request(self, code: str = "?", size: str = "-") -> None:  # ty:ignore[invalid-method-override]
         if isinstance(code, http.HTTPStatus):
             color = logs.TermColor.RED
             if 100 <= code < 200:
@@ -145,26 +161,36 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         if size == "" and self.out_size > 0:
             size = str(self.out_size)
         args = (code, self.address_string(), self.__get_host(), self.requestline)
-        format = "→ %s - %s - %s - %s"
+        fmt = "→ %s - %s - %s - %s"
         if size != "":
             args = (*args, size)
-            format += " - %s"
-        self.logger.info(format, *args)
+            fmt += " - %s"
+        self.logger.info(fmt, *args)
 
-    def __pre_log_request(self):
+    def __pre_log_request(self) -> None:
         args = ("...", self.address_string(), self.__get_host(), self.requestline)
-        format = "← %s - %s - %s - %s"
+        fmt = "← %s - %s - %s - %s"
         if (size := self.__get_length()) > 0:
             args = (*args, size)
-            format += " - %s"
-        self.logger.debug(format, *args)
+            fmt += " - %s"
+        self.logger.debug(fmt, *args)
 
-    def __get_subpath(self, match_full: bool = True) -> str | None:
-        if match_full:
-            match = self.PATH_REGEX.fullmatch(self.path)
-        else:
-            match = self.PATH_REGEX.match(self.path)
-        if match is not None:
+    def __check_update_request(self) -> str | None:
+        if self.headers["X-Token"] != self.token:
+            self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
+            return None
+        if (sub_path := self.__get_subpath_full()) is None:
+            self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
+            return None
+        return sub_path
+
+    def __get_subpath(self) -> str | None:
+        if (match := self.PATH_REGEX.match(self.path)) is not None:
+            return match.group(1)
+        return None
+
+    def __get_subpath_full(self) -> str | None:
+        if (match := self.PATH_REGEX.fullmatch(self.path)) is not None:
             return match.group(1)
         return None
 
@@ -176,10 +202,9 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
     def __get_length(self) -> int:
         if not self.headers["Content-Length"]:
             return 0
-        else:
-            return int(self.headers["Content-Length"])
+        return int(self.headers["Content-Length"])
 
-    def __server_index(self):
+    def __server_index(self) -> None:
         self.__send_basic_body(self.server_version + "\n")
 
     def __send_basic_body(
@@ -188,7 +213,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         content_type: str = "text/plain",
         code: int = http.HTTPStatus.OK,
         message: str | None = None,
-    ):
+    ) -> None:
         encoded: bytes = body.encode()
         self.out_size = len(encoded)
         self.send_response(code, message)
@@ -197,7 +222,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
-    def __send_status_only(self, code: int, message: str | None = None):
+    def __send_status_only(self, code: int, message: str | None = None) -> None:
         self.send_response(code, message)
         self.send_header("Content-Length", "0")
         self.end_headers()

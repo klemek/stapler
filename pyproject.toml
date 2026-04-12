@@ -15,5 +15,5 @@ dev = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "C", "W", "I"]
-ignore = ["E501"]
+select = ["ALL"]
+ignore = ["D", "E501", "S104", "PLR2004", "ANN401", "BLE001", "COM812"]
