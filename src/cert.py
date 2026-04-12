@@ -86,9 +86,10 @@ class CertManager:
         cert_path = self.self_signed_path / host
         if not cert_path.exists():
             cert_path.mkdir(parents=True)
+            self.logger.debug("Created %s", cert_path)
         try:
-            # openssl req -new -newkey rsa:2048 -days 30 -nodes -x509 -keyout server.key -out server.crt
-            subprocess.run(
+            self.logger.debug("Creating self-signed certificate for %s...", host)
+            subprocess.check_output(
                 [
                     self.__get_openssl_bin(),
                     "req",
@@ -104,14 +105,16 @@ class CertManager:
                     "-out",
                     cert_path / "fullchain.pem",
                     "-subj",
-                    f"/C=/ST=/L=/O=/OU=/CN={host}",
+                    f"/CN={host}",
                 ],
-                check=True,
+                stderr=subprocess.STDOUT,
             )
             self.logger.info("Created self-signed certificate for %s", host)
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as e:
             self.logger.exception(
-                "Could not create self-signed certificate for %s", host
+                "Could not create self-signed certificate for %s\n%s",
+                host,
+                e.stdout.decode(),
             )
             return False
         return self.__exists_self_signed(host)
@@ -135,8 +138,8 @@ class CertManager:
 
     def __create_certbot(self, host: str) -> bool:
         try:
-            #  certonly -v --webroot --webroot-path=/var/www/certbot --agree-tos --no-eff-email -n --force-renewal --expand
-            subprocess.run(
+            self.logger.debug("Creating certbot certificate for %s...", host)
+            subprocess.check_output(
                 [
                     self.__get_certbot_bin(),
                     "--non-interactive",
@@ -150,11 +153,15 @@ class CertManager:
                     "--domain",
                     host,
                 ],
-                check=True,
+                stderr=subprocess.STDOUT,
             )
             self.logger.info("Created certbot certificate for %s", host)
-        except subprocess.CalledProcessError:
-            self.logger.exception("Could not create certbot certificate for %s", host)
+        except subprocess.CalledProcessError as e:
+            self.logger.exception(
+                "Could not create certbot certificate for %s\n%s",
+                host,
+                e.stdout.decode(),
+            )
             return False
         return self.__exists_certbot(host)
 
