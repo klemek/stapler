@@ -12,6 +12,7 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
     protocol_version = "HTTP/2.0"
     server_version = "StaplerServer/" + project.get_version()
     CERTBOT_CHALLENGE_PATH = "/.well-known/acme-challenge"
+    PATH_REGEX = re.compile(r"^\/([\w-]+)\/")
 
     def __init__(
         self, *args, params: params.Parameters, registry: registry.Registry, **kwargs
@@ -34,6 +35,8 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         if (page := self.registry.get_from_host(self.get_host())) is not None:
             path = f"/{page.path}" + path
         path = super().translate_path(path)
+        if self.get_subpath(match_full=False) is None:  # not a valid path
+            return ""
         if os.path.basename(path).startswith("."):  # hidden files
             return ""
         return path
@@ -83,8 +86,12 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         )
         self.registry.remove(sub_path)
 
-    def get_subpath(self) -> str | None:
-        if (match := re.match(r"^\/([\w-]+)\/$", self.path)) is not None:
+    def get_subpath(self, match_full: bool = True) -> str | None:
+        if match_full:
+            match = self.PATH_REGEX.fullmatch(self.path)
+        else:
+            match = self.PATH_REGEX.match(self.path)
+        if match is not None:
             return match.group(1)
         return None
 
