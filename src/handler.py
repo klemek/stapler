@@ -4,9 +4,8 @@ import tarfile
 import re
 import io
 import os
-import shutil
 
-from . import project, params, registry
+from . import project, params, registry, data_dir
 
 
 class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
@@ -18,7 +17,7 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
     ):
         self.default_host = params.host
         self.token = params.token
-        self.data_dir = params.data_dir
+        self.data_dir = data_dir.DataDir(params.data_dir)
         self.max_size_bytes = params.max_size_bytes
         self.registry = registry
         super().__init__(*args, directory=params.data_dir, **kwargs)
@@ -54,11 +53,7 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
             )
         try:
             file_bytes = io.BytesIO(self.rfile.read(content_length))
-            target_path = os.path.join(self.data_dir, sub_path)
-            with tarfile.open(fileobj=file_bytes) as tar_file:
-                if os.path.exists(target_path):
-                    shutil.rmtree(target_path)
-                tar_file.extractall(os.path.join(self.data_dir, sub_path))
+            self.data_dir.extract_tar_bytes(sub_path, file_bytes)
         except tarfile.TarError:
             return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid tar archive")
         except Exception as e:
@@ -73,11 +68,10 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
             return self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
         if (sub_path := self.get_subpath()) is None:
             return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
-        target_path = os.path.join(self.data_dir, sub_path)
-        if not os.path.exists(target_path):
+        if not self.data_dir.exists(sub_path):
             return self.send_error(http.HTTPStatus.NOT_FOUND, "Not found")
         try:
-            shutil.rmtree(target_path)
+            self.data_dir.remove(sub_path)
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.send_status_only(
