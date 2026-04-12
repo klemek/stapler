@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import shutil
+import ssl
 import subprocess
 import typing
 
@@ -49,19 +50,21 @@ class CertManager:
             return True
         return created or self.__create_self_signed(host)
 
-    def get_pem(self, host: str) -> pathlib.Path | None:
+    def get_cert(self, host: str) -> pathlib.Path:
         if self.__exists_certbot(host):
             return self.__certbot_file(host, self.CRT_FILE)
         if self.__exists_self_signed(host):
             return self.__self_signed_file(host, self.CRT_FILE)
-        return None
+        msg = "Cannot get cert file for %s"
+        raise CertManagerError(msg, host)
 
-    def get_key(self, host: str) -> pathlib.Path | None:
+    def get_key(self, host: str) -> pathlib.Path:
         if self.__exists_certbot(host):
             return self.__certbot_file(host, self.KEY_FILE)
         if self.__exists_self_signed(host):
             return self.__self_signed_file(host, self.KEY_FILE)
-        return None
+        msg = "Cannot get key file for %s"
+        raise CertManagerError(msg, host)
 
     def __self_signed_file(self, host: str, file: str) -> pathlib.Path:
         return self.self_signed_path / host / file
@@ -83,9 +86,6 @@ class CertManager:
         cert_path = self.self_signed_path / host
         if not cert_path.exists():
             cert_path.mkdir(parents=True)
-        cert_host: str = host
-        if ":" in host:
-            cert_host = host.split(":", maxsplit=2)[0]
         try:
             # openssl req -new -newkey rsa:2048 -days 30 -nodes -x509 -keyout server.key -out server.crt
             subprocess.run(
@@ -104,7 +104,7 @@ class CertManager:
                     "-out",
                     cert_path / "fullchain.pem",
                     "-subj",
-                    f"/C=/ST=/L=/O=/OU=/CN={cert_host}",
+                    f"/C=/ST=/L=/O=/OU=/CN={host}",
                 ],
                 check=True,
             )
@@ -134,9 +134,6 @@ class CertManager:
         return binary_path
 
     def __create_certbot(self, host: str) -> bool:
-        cert_host: str = host
-        if ":" in host:
-            cert_host = host.split(":", maxsplit=2)[0]
         try:
             #  certonly -v --webroot --webroot-path=/var/www/certbot --agree-tos --no-eff-email -n --force-renewal --expand
             subprocess.run(
@@ -151,7 +148,7 @@ class CertManager:
                     "--cert-name",
                     host,
                     "--domain",
-                    cert_host,
+                    host,
                 ],
                 check=True,
             )
@@ -160,3 +157,35 @@ class CertManager:
             self.logger.exception("Could not create certbot certificate for %s", host)
             return False
         return self.__exists_certbot(host)
+
+    def get_https_context(self, default_host: str) -> ssl.SSLContext | None:
+        if not self.exists(default_host):
+            self.logger.warning("Cannot create HTTPS context for %s", default_host)
+            return None
+        cert_file = self.get_cert(default_host)
+        key_file = self.get_key(default_host)
+        context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        context.load_cert_chain(
+            cert_file,
+            key_file,
+        )
+        context.sni_callback = self.__sni_callback
+        return context
+
+    def __sni_callback(
+        self, socket: ssl.SSLObject, host: str, _: ssl.SSLContext, /
+    ) -> None | int:
+        if host is None:
+            return
+        if not self.exists(host) and not self.create_or_update(host):
+            msg = "Could not get certificate for %s"
+            raise CertManagerError(msg, host)
+        new_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        cert_file = self.get_cert(host)
+        key_file = self.get_key(host)
+        new_context.load_cert_chain(
+            cert_file,
+            key_file,
+        )
+        socket.context = new_context
+        return None

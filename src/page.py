@@ -13,7 +13,7 @@ class Page:
     def __repr__(self) -> str:
         out = self.get_url_path()
         if self.host is not None:
-            out += f" [http://{self.host}/]"
+            out += f" [{self.host}]"
         if not self.with_index:
             out += " (no index)"
         return out

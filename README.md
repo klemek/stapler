@@ -77,7 +77,7 @@ curl -X DELETE \
 - [x] certbot/self-signed create/renew in specific dir
 - [x] better logger
 - [ ] renew command
-- [ ] https mode w/ multiple hosts
+- [x] https mode w/ multiple hosts
 - [ ] restart command (on new/deleted host)
 - [ ] proper doc
 - [ ] log visits (and store accross sessions)

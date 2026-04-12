@@ -5,7 +5,7 @@ import os
 from . import project
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Parameters:
     port: int
     host: str
@@ -18,6 +18,7 @@ class Parameters:
     self_signed_path: str
     with_certbot: bool
     with_certificates: bool
+    https: bool
     debug: bool
 
     @classmethod
@@ -160,8 +161,8 @@ def parse_parameters() -> Parameters:
     parser.add_argument(
         "--certbot",
         action=argparse.BooleanOptionalAction,
-        help="Use Certbot (default: true)",
-        default=True,
+        help="Use Certbot (default: false)",
+        default=False,
         dest="with_certbot",
     )
     parser.add_argument(
@@ -171,5 +172,13 @@ def parse_parameters() -> Parameters:
         default=True,
         dest="with_certificates",
     )
+    parser.add_argument(
+        "--https",
+        action=argparse.BooleanOptionalAction,
+        help="Use https (implies --certificates) (default: true)",
+        default=True,
+    )
     args = parser.parse_args()
+    if args.https:
+        args.with_certificates = True
     return Parameters.from_namespace(args)

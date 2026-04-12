@@ -20,7 +20,6 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
     CERTBOT_CHALLENGE_PATH = "/.well-known/acme-challenge"
     PATH_REGEX = re.compile(r"^\/([\w-]+)\/")
     HOST_PART_REGEX = re.compile(r"^([a-zA-Z0-9]|[a-zA-Z0-9]*[a-zA-Z0-9][a-zA-Z0-9])$")
-    HOST_PORT_REGEX = re.compile(r"^\d{2,5}$")
 
     @typing.override
     def __init__(
@@ -31,7 +30,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         **kwargs: dict[str, typing.Any],
     ) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.default_host = params.host
+        self.default_host = params.host.split(":", maxsplit=2)[0]
         self.token = params.token
         self.data_dir = data_dir.DataDir(params.data_dir)
         self.max_size_bytes = params.max_size_bytes
@@ -114,12 +113,11 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             return self.certbot_www + path.removeprefix(self.CERTBOT_CHALLENGE_PATH)
         if (page := self.registry.get_from_host(self.__get_host())) is not None:
             path = f"/{page.path}" + path
-        path = super().translate_path(path)
-        if self.__get_subpath() is None:  # not a valid path
+        if self.__get_subpath(path) is None:  # not a valid path
             return ""
         if pathlib.Path(path).name.startswith("."):  # hidden files
             return ""
-        return path
+        return super().translate_path(path)
 
     @typing.override
     def send_error(
@@ -186,25 +184,25 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         if self.headers["X-Token"] != self.token:
             self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
             return None
-        if (sub_path := self.__get_subpath_full()) is None:
+        if (sub_path := self.__get_subpath_full(self.path)) is None:
             self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
             return None
         return sub_path
 
-    def __get_subpath(self) -> str | None:
-        if (match := self.PATH_REGEX.match(self.path)) is not None:
+    def __get_subpath(self, path: str) -> str | None:
+        if (match := self.PATH_REGEX.match(path)) is not None:
             return match.group(1)
         return None
 
-    def __get_subpath_full(self) -> str | None:
-        if (match := self.PATH_REGEX.fullmatch(self.path)) is not None:
+    def __get_subpath_full(self, path: str) -> str | None:
+        if (match := self.PATH_REGEX.fullmatch(path)) is not None:
             return match.group(1)
         return None
 
     def __get_host(self) -> str:
         if self.headers["Host"] is None:
             return self.default_host
-        return self.headers["Host"]
+        return self.headers["Host"].split(":", maxsplit=2)[0]
 
     def __get_length(self) -> int:
         if not self.headers["Content-Length"]:
@@ -212,11 +210,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         return int(self.headers["Content-Length"])
 
     def __valid_host(self, host: str) -> bool:
-        hostname, port = host.split(":", maxsplit=2)
-        for part in hostname.split("."):
-            if not self.HOST_PART_REGEX.fullmatch(part):
-                return False
-        return not (port and len(port) and not self.HOST_PORT_REGEX.fullmatch(port))
+        return all(self.HOST_PART_REGEX.fullmatch(part) for part in host.split("."))
 
     def __server_index(self) -> None:
         self.__send_basic_body(self.server_version + "\n")

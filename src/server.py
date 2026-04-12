@@ -15,10 +15,7 @@ class StaplerServer:
         self.params = params
         self.registry = registry.Registry(params)
         self.cert_manager = cert.CertManager(params)
-        self.server = http.server.ThreadingHTTPServer(
-            (params.bind, params.port),
-            self.request_handler,
-        )
+        self.default_host = params.host.split(":", maxsplit=2)[0]
 
     def request_handler(self, *args: typing.Any) -> http.server.BaseHTTPRequestHandler:
         return handler.RequestHandler(*args, params=self.params, registry=self.registry)
@@ -27,19 +24,34 @@ class StaplerServer:
         self.logger.info("Starting up...")
         self.registry.load_pages()
         if self.params.with_certificates:
-            self.cert_manager.init([self.params.host, *self.registry.get_hosts()])
+            self.cert_manager.init([self.default_host, *self.registry.get_hosts()])
+
+    def __create_https_context(self, server: http.server.HTTPServer) -> bool:
+        https = False
+        if (
+            context := self.cert_manager.get_https_context(self.default_host)
+        ) is not None:
+            https = True
+            server.socket = context.wrap_socket(server.socket, server_side=True)
+        return https
 
     def start(self) -> None:
         self.logger.info("Version %s", project.get_version())
         self.__startup()
+        server = http.server.ThreadingHTTPServer(
+            (self.params.bind, self.params.port),
+            self.request_handler,
+        )
+        https = self.params.https and self.__create_https_context(server)
         self.logger.info(
             "Listening on %s:%d...",
-            self.server.server_address[0],
-            self.server.server_port,
+            server.server_address[0],
+            server.server_port,
         )
         self.logger.info(
-            "Server up and ready on http://%s",
+            "Server up and ready on %s://%s",
+            "https" if https else "http",
             self.params.host,
         )
         with contextlib.suppress(KeyboardInterrupt):
-            self.server.serve_forever()
+            server.serve_forever()
