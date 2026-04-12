@@ -1,5 +1,6 @@
 import enum
 import logging
+import typing
 
 from . import params
 
@@ -49,10 +50,13 @@ class ColoredLoggingFormatter(logging.Formatter):
         logging.CRITICAL: TermColor.RED,
     }
 
+    @typing.override
     def __init__(self, trace: bool):
         self.trace = trace
+        super().__init__()
 
-    def format(self, record):
+    @typing.override
+    def format(self, record: logging.LogRecord):
         log_color: TermColor = (
             self.FORMAT_COLORS[record.levelno]
             if record.levelno in self.FORMAT_COLORS
