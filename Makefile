@@ -72,5 +72,8 @@ format: ruff-fix ruff-format ## format project
 .PHONY: lint
 lint: ruff ruff-format-check ty ## lint project
 
+.PHONY: build
+build: docker-build ## build project
+
 .PHONY: start
-start: docker-run ## start server in localhost
+start: build docker-run ## start server in localhost

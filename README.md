@@ -1,20 +1,26 @@
 # Stapler
 
 ```txt
-usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] -t TOKEN [--max-size-bytes MAX_SIZE_BYTES] [-b BIND]
+usage: stapler [-h] [-p PORT] [--host HOST] [-d DATA_DIR] -t TOKEN [--max-size-bytes MAX_SIZE] [-b BIND] [--certbot-conf CERTBOT_CONF] [--certbot-www CERTBOT_WWW]
 
 Static pages as simple as a gzip file
 
 options:
   -h, --help            show this help message and exit
-  -p, --port PORT       server port (default: 8080) (env var: PORT)
-  --host HOST           server default host (default: localhost) (env var: HOST)
+  -p, --port PORT       server port (default: 8080)
+  --host HOST           server default host (default: localhost)
   -d, --data-dir DATA_DIR
-                        directory where files are/will be stored (default: ./data) (env var: DATA_DIR)
-  -t, --token TOKEN     secret token for update requests (env var: TOKEN)
-  --max-size-bytes MAX_SIZE_BYTES
-                        max size of accepted archives (in bytes) (default: 2000000 -> 2MB) (env var: MAX_SIZE)
-  -b, --bind BIND       server bind address (default: 0.0.0.0) (env var: BIND)
+                        directory where pages are/will be stored (default: ./data)
+  -t, --token TOKEN     secret token for update requests
+  --max-size-bytes MAX_SIZE
+                        max size of accepted archives (in bytes) (default: 2000000)
+  -b, --bind BIND       server bind address (default: 0.0.0.0)
+  --certbot-conf CERTBOT_CONF
+                        Certbot config dir (default: /etc/letsencrypt)
+  --certbot-www CERTBOT_WWW
+                        Certbot www dir (default: ./data/.certbot)
+
+(Each option can be supplied with equivalent environment variable.)
 ```
 
 ## Endpoints
@@ -66,7 +72,7 @@ curl -X DELETE \
 - [x] .host in /data/xxx can be translated as host in GET /
 - [x] header to setup .host file instead of in archive
 - [x] ignore .gitignore/.host etc at root
-- [ ] cerbot install in container + path env/arg
+- [x] cerbot install in container + path env/arg
 - [ ] redirect /.well-known/acme-challenge to specific path
 - [ ] certbot/self-signed create/renew in specific dir
 - [ ] renew command

@@ -2,13 +2,19 @@ FROM python:3.14-alpine
 
 WORKDIR /app
 
-VOLUME [ "/data" ]
+VOLUME [ "/data", "/etc/letsencrypt" ]
 
-ENV HOST=localhost
 ENV PORT=8080
-ENV BIND=0.0.0.0
+ENV HOST=localhost
 ENV DATA_DIR=/data
 ENV MAX_SIZE=2000000
+ENV BIND=0.0.0.0
+ENV CERTBOT_CONF=/etc/letsencrypt
+ENV CERTBOT_WWW=/data/.certbot
+
+RUN apk add --no-cache \
+    openssl \
+    certbot
 
 RUN PIP_ROOT_USER_ACTION=ignore python3 -m pip install uv
 
