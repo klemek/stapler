@@ -20,11 +20,16 @@ class StaplerServer:
     def request_handler(self, *args: typing.Any) -> http.server.BaseHTTPRequestHandler:
         return handler.RequestHandler(*args, params=self.params, registry=self.registry)
 
+    def __get_all_hosts(self) -> list[str]:
+        return [self.default_host, *self.registry.get_hosts()]
+
     def __startup(self) -> None:
         self.logger.info("Starting up...")
         self.registry.load_pages()
         if self.params.with_certificates:
-            self.cert_manager.init([self.default_host, *self.registry.get_hosts()])
+            self.cert_manager.init(self.__get_all_hosts())
+        if not len(self.params.token):
+            self.logger.warning("No token provided update requests will fail")
 
     def __create_https_context(self, server: http.server.HTTPServer) -> bool:
         https = False
@@ -35,7 +40,7 @@ class StaplerServer:
             server.socket = context.wrap_socket(server.socket, server_side=True)
         return https
 
-    def start(self) -> None:
+    def run(self) -> int:
         self.logger.info("Version %s", project.get_version())
         self.__startup()
         server = http.server.ThreadingHTTPServer(
@@ -55,3 +60,14 @@ class StaplerServer:
         )
         with contextlib.suppress(KeyboardInterrupt):
             server.serve_forever()
+        return 0
+
+    def renew(self) -> int:
+        self.logger.info("Starting up...")
+        if not self.params.with_certificates:
+            self.logger.warning("Cannot renew without certificates")
+            return 1
+        self.registry.load_pages()
+        for host in self.__get_all_hosts():
+            self.cert_manager.create_or_update(host)
+        return 0

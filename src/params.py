@@ -1,6 +1,7 @@
 import argparse
 import dataclasses
 import os
+import typing
 
 from . import project
 
@@ -21,7 +22,7 @@ class Parameters:
     with_certbot: bool
     with_certificates: bool
     https: bool
-    command: str
+    command: typing.Literal["run", "renew"]
     debug: bool
 
     @classmethod
@@ -95,7 +96,6 @@ def parse_parameters() -> Parameters:
         epilog=__EPILOG,
         suggest_on_error=True,
     )
-    subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction)
     __add_arg_str(
         parser,
@@ -140,56 +140,53 @@ def parse_parameters() -> Parameters:
         default="./data/.certbot",
         help_txt="Certbot www dir",
     )
-
-    run_parser = subparsers.add_parser(
-        "run",
-        help="Run Stapler server",
-        description="Run Stapler server",
-        epilog=__EPILOG,
-    )
     __add_arg_str(
-        run_parser,
+        parser,
         "--host",
         env_var="HOST",
         default="localhost:8080",
         help_txt="server default host",
     )
     __add_arg_int(
-        run_parser,
+        parser,
         "-p",
         "--port",
         env_var="PORT",
         default=8080,
         help_txt="server port",
     )
-    run_parser.add_argument(
+    parser.add_argument(
         "--https",
         action=argparse.BooleanOptionalAction,
         help="Use https (implies --certificates) (default: true)",
         default=True,
     )
-    __add_arg_str_required(
-        run_parser,
+    __add_arg_str(
+        parser,
         "-t",
         "--token",
         env_var="TOKEN",
+        default="",
         help_txt="secret token for update requests",
     )
     __add_arg_int(
-        run_parser,
+        parser,
         "--max-size-bytes",
         env_var="MAX_SIZE",
         default=2_000_000,
         help_txt="max size of accepted archives (in bytes)",
     )
     __add_arg_str(
-        run_parser,
+        parser,
         "-b",
         "--bind",
         env_var="BIND",
         default="0.0.0.0",
         help_txt="server bind address",
     )
+    subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
+    subparsers.add_parser("run", help="Run Stapler server")
+    subparsers.add_parser("renew", help="Renew certificates")
     args = parser.parse_args()
     if args.https:
         args.with_certificates = True

@@ -181,7 +181,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         self.logger.debug(fmt, *args)
 
     def __check_update_request(self) -> str | None:
-        if self.headers["X-Token"] != self.token:
+        if len(self.token) and self.headers["X-Token"] != self.token:
             self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
             return None
         if (sub_path := self.__get_subpath_full(self.path)) is None:
