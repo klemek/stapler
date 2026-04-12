@@ -20,6 +20,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
     CERTBOT_CHALLENGE_PATH = "/.well-known/acme-challenge"
     PATH_REGEX = re.compile(r"^\/([\w-]+)\/")
     HOST_PART_REGEX = re.compile(r"^([a-zA-Z0-9]|[a-zA-Z0-9]*[a-zA-Z0-9][a-zA-Z0-9])$")
+    AUTHORIZED_PATHS: typing.ClassVar[list[str]] = ["/favicon.ico"]
 
     @typing.override
     def __init__(
@@ -116,7 +117,9 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             return self.certbot_www + path.removeprefix(self.CERTBOT_CHALLENGE_PATH)
         if (page := self.registry.get_from_host(self.__get_host())) is not None:
             path = f"/{page.path}" + path
-        if self.__get_subpath(path) is None:  # not a valid path
+        if (
+            path not in self.AUTHORIZED_PATHS and self.__get_subpath(path) is None
+        ):  # not a valid path
             return ""
         if pathlib.Path(path).name.startswith("."):  # hidden files
             return ""

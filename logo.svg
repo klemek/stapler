@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200"
+    width="200" height="200">
+    <rect width="200" height="200" fill="url('#gradient')"></rect>
+    <defs>
+        <linearGradient id="gradient" gradientTransform="rotate(0 0.5 0.5)">
+            <stop offset="0%" stop-color="#dee90b"></stop>
+            <stop offset="100%" stop-color="#d9e241"></stop>
+        </linearGradient>
+    </defs>
+    <g>
+        <g fill="#1b3855"
+            transform="matrix(8.37138686131387,0,0,8.37138686131387,25.368069030107364,155.46141451870437)"
+            stroke="#0e5278" stroke-width="0">
+            <path
+                d="M5.51-16.66L5.51-14.26L4.36-14.26L4.36 1.02L5.51 1.02L5.51 3.41L1.05 3.41L1.05-16.66L5.51-16.66ZM11.14-16.66L11.14-14.26L9.99-14.26L9.99 1.02L11.14 1.02L11.14 3.41L6.69 3.41L6.69-16.66L11.14-16.66ZM16.78-16.66L16.78-14.26L15.63-14.26L15.63 1.02L16.78 1.02L16.78 3.41L12.32 3.41L12.32-16.66L16.78-16.66Z">
+            </path>
+        </g>
+    </g>
+</svg>

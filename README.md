@@ -1,5 +1,7 @@
 # Stapler
 
+![logo.svg](logo.svg)
+
 ```txt
 usage: stapler [-h] [--debug | --no-debug] [-d DATA_DIR] [--certificates | --no-certificates] [--certbot | --no-certbot] [--self-signed-path SELF_SIGNED_PATH] [--certbot-conf CERTBOT_CONF]
                [--certbot-www CERTBOT_WWW] [--host HOST] [-p PORT] [--https | --no-https] [-t TOKEN] [--max-size-bytes MAX_SIZE] [-b BIND]
@@ -96,7 +98,7 @@ curl -X DELETE \
 - [x] create certificate on request
 - [x] certbot copy certificates for unique path
 - [x] better error page
-- [ ] add favicon.ico + special path
+- [x] add favicon.ico + special path
 - [ ] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
 - [ ] proper doc
 
