@@ -94,7 +94,7 @@ curl -X DELETE \
 - [x] renew command
 - [x] https mode w/ multiple hosts
 - [x] create certificate on request
-- [ ] certbot symlink certificates for unique path
+- [x] certbot copy certificates for unique path
 - [x] better error page
 - [ ] add favicon.ico + special path
 - [ ] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)

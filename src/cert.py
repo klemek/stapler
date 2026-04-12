@@ -156,6 +156,9 @@ class CertManager:
                 stderr=subprocess.STDOUT,
             )
             self.logger.info("Created certbot certificate for %s", host)
+            cert_path = self.certbot_conf / "live" / host
+            cert_path.copy_into(self.self_signed_path, follow_symlinks=False)
+            self.logger.debug("Copied certbot certificate to self certificates")
         except subprocess.CalledProcessError as e:
             self.logger.exception(
                 "Could not create certbot certificate for %s\n%s",
