@@ -23,7 +23,7 @@ COPY uv.lock pyproject.toml ./
 
 RUN uv sync --no-dev
 
-COPY main.py ./
+COPY main.py favicon.ico ./
 COPY src ./src/
 
 ENTRYPOINT [ "uv", "run", "--no-sync", "main.py"]

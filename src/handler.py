@@ -117,7 +117,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             return self.certbot_www + path.removeprefix(self.CERTBOT_CHALLENGE_PATH)
         if (page := self.registry.get_from_host(self.__get_host())) is not None:
             path = f"/{page.path}" + path
-        if (
+        elif (
             path not in self.AUTHORIZED_PATHS and self.__get_subpath(path) is None
         ):  # not a valid path
             return ""

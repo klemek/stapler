@@ -3,7 +3,7 @@ import http.server
 import logging
 import typing
 
-from . import cert, handler, project, registry
+from . import cert, data_dir, handler, project, registry
 
 if typing.TYPE_CHECKING:
     from . import params
@@ -15,6 +15,7 @@ class StaplerServer:
         self.params = params
         self.registry = registry.Registry(params)
         self.cert_manager = cert.CertManager(params)
+        self.data_dir = data_dir.DataDir(params.data_dir)
         self.default_host = params.host.split(":", maxsplit=2)[0]
 
     def request_handler(self, *args: typing.Any) -> http.server.BaseHTTPRequestHandler:
@@ -33,6 +34,7 @@ class StaplerServer:
         self.registry.load_pages()
         if self.params.with_certificates:
             self.cert_manager.init(self.__get_all_hosts())
+        self.data_dir.init()
         if not len(self.params.token):
             self.logger.warning("No token provided update requests will fail")
 
@@ -73,6 +75,7 @@ class StaplerServer:
             self.logger.warning("Cannot renew without certificates")
             return 1
         self.registry.load_pages()
+        self.cert_manager.init(self.__get_all_hosts())
         for host in self.__get_all_hosts():
             self.cert_manager.create_or_update(host)
         return 0

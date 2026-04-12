@@ -12,10 +12,17 @@ if typing.TYPE_CHECKING:
 class DataDir:
     HOST_FILE = ".host"
     PATH_REGEX = re.compile(r"^[\w-]+$")
+    NEEDED_FILES: typing.ClassVar[list[str]] = ["favicon.ico"]
 
     def __init__(self, root_path: str) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.root_path = pathlib.Path(root_path)
+
+    def init(self) -> None:
+        for file in self.NEEDED_FILES:
+            if not (self.root_path / file).is_file():
+                (pathlib.Path.cwd() / file).copy_into(self.root_path)
+                self.logger.debug("Copied %s into data dir", file)
 
     def list_paths(self) -> list[str]:
         paths: list[str] = []
