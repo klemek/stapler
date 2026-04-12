@@ -142,6 +142,7 @@ class CertManager:
             subprocess.check_output(
                 [
                     self.__get_certbot_bin(),
+                    "certonly",
                     "--non-interactive",
                     "--agree-tos",
                     "--webroot",
