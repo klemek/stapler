@@ -8,7 +8,7 @@ import re
 import tarfile
 import typing
 
-from . import data_dir, logs, project
+from . import cert, data_dir, logs, project
 
 if typing.TYPE_CHECKING:
     from . import params, registry
@@ -27,6 +27,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         *args: typing.Any,
         params: params.Parameters,
         registry: registry.Registry,
+        cert_manager: cert.CertManager,
         **kwargs: dict[str, typing.Any],
     ) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -35,6 +36,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
         self.data_dir = data_dir.DataDir(params.data_dir)
         self.max_size_bytes = params.max_size_bytes
         self.registry = registry
+        self.cert_manager = cert_manager
         self.certbot_www = os.path.realpath(params.certbot_www)
         self.out_size = 0
         super().__init__(*args, directory=params.data_dir, **kwargs)
@@ -79,9 +81,10 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             http.HTTPStatus.CREATED,
             f"Resource /{sub_path}/ updated",
         )
-        if host is not None:
-            self.registry.set_host(sub_path, host)
         self.registry.add(sub_path)
+        if host is not None and self.cert_manager.create_or_update(host):
+            self.registry.set_host(sub_path, host)
+            self.registry.add(sub_path)
         return None
 
     def do_DELETE(self) -> None:

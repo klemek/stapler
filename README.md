@@ -93,13 +93,12 @@ curl -X DELETE \
 - [x] better logger
 - [x] renew command
 - [x] https mode w/ multiple hosts
-- [ ] restart command (on new/deleted host)
-- [ ] proper doc
-- [ ] log visits (and store accross sessions)
-- [ ] deliver visits in /page/visits
+- [x] create certificate on request
+- [ ] certbot symlink certificates for unique path
 - [x] better error page
 - [ ] add favicon.ico + special path
 - [ ] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
+- [ ] proper doc
 
 ### Makefile targets
 

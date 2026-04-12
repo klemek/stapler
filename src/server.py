@@ -18,7 +18,12 @@ class StaplerServer:
         self.default_host = params.host.split(":", maxsplit=2)[0]
 
     def request_handler(self, *args: typing.Any) -> http.server.BaseHTTPRequestHandler:
-        return handler.RequestHandler(*args, params=self.params, registry=self.registry)
+        return handler.RequestHandler(
+            *args,
+            params=self.params,
+            registry=self.registry,
+            cert_manager=self.cert_manager,
+        )
 
     def __get_all_hosts(self) -> list[str]:
         return [self.default_host, *self.registry.get_hosts()]
