@@ -15,6 +15,9 @@ class Parameters:
     max_size_bytes: int
     certbot_conf: str
     certbot_www: str
+    self_signed_path: str
+    with_certbot: bool
+    with_certificates: bool
     debug: bool
 
     @classmethod
@@ -146,6 +149,27 @@ def parse_parameters() -> Parameters:
         default="./data/.certbot",
         help_txt="Certbot www dir",
     )
+    __add_arg_str(
+        parser,
+        "--self-signed-path",
+        env_var="SELF_SIGNED_PATH",
+        default="./data/.certificates",
+        help_txt="Self-signed certificates dir",
+    )
     parser.add_argument("--debug", action=argparse.BooleanOptionalAction)
+    parser.add_argument(
+        "--certbot",
+        action=argparse.BooleanOptionalAction,
+        help="Use Certbot (default: true)",
+        default=True,
+        dest="with_certbot",
+    )
+    parser.add_argument(
+        "--certificates",
+        action=argparse.BooleanOptionalAction,
+        help="Handle certificates (default: true)",
+        default=True,
+        dest="with_certificates",
+    )
     args = parser.parse_args()
     return Parameters.from_namespace(args)

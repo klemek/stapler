@@ -74,7 +74,7 @@ curl -X DELETE \
 - [x] ignore .gitignore/.host etc at root
 - [x] cerbot install in container + path env/arg
 - [x] redirect /.well-known/acme-challenge to specific path
-- [ ] certbot/self-signed create/renew in specific dir
+- [x] certbot/self-signed create/renew in specific dir
 - [x] better logger
 - [ ] renew command
 - [ ] https mode w/ multiple hosts
@@ -84,6 +84,7 @@ curl -X DELETE \
 - [ ] deliver visits in /page/visits
 - [x] better error page
 - [ ] add favicon.ico + special path
+- [ ] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
 
 ### Makefile targets
 

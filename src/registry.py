@@ -19,6 +19,9 @@ class Registry:
         for path in self.data_dir.list_paths():
             self.add(path)
 
+    def get_hosts(self) -> list[str]:
+        return [p.host for p in self.pages.values() if p.host is not None]
+
     def add(self, path: str) -> None:
         self.pages[path] = page.Page(
             path,

@@ -11,6 +11,7 @@ ENV MAX_SIZE=2000000
 ENV BIND=0.0.0.0
 ENV CERTBOT_CONF=/etc/letsencrypt
 ENV CERTBOT_WWW=/data/.certbot
+ENV SELF_SIGNED_PATH=/data/.certificates
 
 RUN apk add --no-cache \
     openssl \

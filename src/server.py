@@ -1,10 +1,9 @@
 import contextlib
 import http.server
 import logging
-import pathlib
 import typing
 
-from . import handler, project, registry
+from . import cert, handler, project, registry
 
 if typing.TYPE_CHECKING:
     from . import params
@@ -15,6 +14,7 @@ class StaplerServer:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.params = params
         self.registry = registry.Registry(params)
+        self.cert_manager = cert.CertManager(params)
         self.server = http.server.ThreadingHTTPServer(
             (params.bind, params.port),
             self.request_handler,
@@ -23,15 +23,11 @@ class StaplerServer:
     def request_handler(self, *args: typing.Any) -> http.server.BaseHTTPRequestHandler:
         return handler.RequestHandler(*args, params=self.params, registry=self.registry)
 
-    def __init_certbot_www(self) -> None:
-        certbot_www_path = pathlib.Path(self.params.certbot_www)
-        if not certbot_www_path.exists():
-            certbot_www_path.mkdir(parents=True)
-
     def __startup(self) -> None:
         self.logger.info("Starting up...")
         self.registry.load_pages()
-        self.__init_certbot_www()
+        if self.params.with_certificates:
+            self.cert_manager.init([self.params.host, *self.registry.get_hosts()])
 
     def start(self) -> None:
         self.logger.info("Version %s", project.get_version())
