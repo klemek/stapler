@@ -53,7 +53,9 @@ curl -X DELETE \
   http://stapler-host/my-project/
 ```
 
-## TODO
+## Development
+
+### TODO
 
 - [x] basic http server
 - [x] docker container
@@ -74,7 +76,7 @@ curl -X DELETE \
 - [ ] log visits (and store accross sessions)
 - [ ] deliver visits in /page/visits
 
-## Makefile targets
+### Makefile targets
 
 ```txt
 Usage: make [target1] (target2) ...
@@ -94,8 +96,10 @@ start                start server in localhost
 
 Environment:
 UV = uv
-RUFF = uv run ruff
-TY = uv run ty
+RUFF = uv run --active ruff
+TY = uv run --active ty
 DOCKER = docker
 DOCKER_TAG = localhost/stapler:latest
+TOKEN = secret
+PORT = 8080
 ```

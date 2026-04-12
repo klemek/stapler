@@ -6,11 +6,12 @@ ifeq (, $(shell which uv))
 	UV ?= python3 -m uv
 endif
 
-RUFF ?= $(UV) run ruff
-TY ?= $(UV) run ty
+RUFF ?= $(UV) run --active ruff
+TY ?= $(UV) run --active ty
 DOCKER ?= docker
 DOCKER_TAG ?= localhost/stapler:latest
 TOKEN ?= secret
+PORT ?= 8080
 
 # DOCS
 
@@ -31,7 +32,7 @@ print-%:
 # FILES
 
 .venv: uv.lock
-	@$(UV) sync
+	@$(UV) sync --active
 
 # TOOLS
 
@@ -61,7 +62,7 @@ docker-build: ## docker build
 
 .PHONY: docker-run
 docker-run: docker-build ## docker run
-	@$(DOCKER) run -it -p 8080:8080 -v ./data:/data $(DOCKER_TAG) --token $(TOKEN)
+	@$(DOCKER) run -it -p $(PORT):8080 -v ./data:/data $(DOCKER_TAG) --token $(TOKEN)
 
 # ACTIONS
 
