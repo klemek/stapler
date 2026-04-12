@@ -1,13 +1,13 @@
 import http.server
+import os
 
-from . import params, handler, registry
+from . import params, handler, registry, project
 
 
 class StaplerServer:
     def __init__(self, params: params.Parameters):
-        self.default_host = params.host
-        self.registry = registry.Registry(params)
         self.params = params
+        self.registry = registry.Registry(params)
         self.server = http.server.ThreadingHTTPServer(
             (params.bind, params.port),
             self.request_handler,
@@ -18,10 +18,21 @@ class StaplerServer:
             *args, params=self.params, registry=self.registry
         )
 
-    def start(self):
+    def __repr__(self):
+        return f"StaplerServer ({project.get_version()})"
+
+    def __init_certbot_www(self):
+        os.makedirs(self.params.certbot_www, exist_ok=True)
+
+    def __startup(self):
+        print(f"{self}: starting up...")
         self.registry.load_pages()
+        self.__init_certbot_www()
+
+    def start(self):
+        self.__startup()
         print(
-            f"{handler.StaplerRequestHandler.server_version} serving on http://{self.default_host}:{self.server.server_port}..."
+            f"{self}: serving on http://{self.params.host}:{self.server.server_port}..."
         )
         try:
             self.server.serve_forever()

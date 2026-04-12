@@ -73,8 +73,9 @@ curl -X DELETE \
 - [x] header to setup .host file instead of in archive
 - [x] ignore .gitignore/.host etc at root
 - [x] cerbot install in container + path env/arg
-- [ ] redirect /.well-known/acme-challenge to specific path
+- [x] redirect /.well-known/acme-challenge to specific path
 - [ ] certbot/self-signed create/renew in specific dir
+- [ ] better logger
 - [ ] renew command
 - [ ] https mode w/ multiple hosts
 - [ ] restart command (on new/deleted host)

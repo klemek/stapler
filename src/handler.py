@@ -11,6 +11,7 @@ from . import project, params, registry, data_dir
 class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
     protocol_version = "HTTP/2.0"
     server_version = "StaplerServer/" + project.get_version()
+    CERTBOT_CHALLENGE_PATH = "/.well-known/acme-challenge"
 
     def __init__(
         self, *args, params: params.Parameters, registry: registry.Registry, **kwargs
@@ -20,6 +21,7 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.data_dir = data_dir.DataDir(params.data_dir)
         self.max_size_bytes = params.max_size_bytes
         self.registry = registry
+        self.certbot_www = os.path.realpath(params.certbot_www)
         super().__init__(*args, directory=params.data_dir, **kwargs)
 
     def list_directory(self, *_, **__):
@@ -27,6 +29,8 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(http.HTTPStatus.NOT_FOUND, "File not found")
 
     def translate_path(self, path: str) -> str:
+        if path.startswith(self.CERTBOT_CHALLENGE_PATH):
+            return self.certbot_www + path.removeprefix(self.CERTBOT_CHALLENGE_PATH)
         if (page := self.registry.get_from_host(self.get_host())) is not None:
             path = f"/{page.path}" + path
         path = super().translate_path(path)
