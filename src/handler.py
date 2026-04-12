@@ -51,7 +51,10 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
             return self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
         if (sub_path := self.get_subpath()) is None:
             return self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
-        content_length = int(self.headers["Content-Length"])
+        if not self.headers["Content-Length"]:
+            content_length = 0
+        else:
+            content_length = int(self.headers["Content-Length"])
         if content_length == 0:
             return self.send_error(http.HTTPStatus.LENGTH_REQUIRED, "No body found")
         if content_length > self.max_size_bytes:
@@ -66,7 +69,7 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             return self.send_error(http.HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
         self.send_status_only(http.HTTPStatus.CREATED, f"Resource /{sub_path}/ updated")
-        if self.headers["X-Host"]:
+        if self.headers["X-Host"] is not None:
             self.registry.set_host(sub_path, self.headers["X-Host"])
         self.registry.add(sub_path)
 
@@ -96,6 +99,8 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         return None
 
     def get_host(self) -> str:
+        if self.headers["Host"] is None:
+            return self.default_host
         return self.headers["Host"].split(":")[0]
 
     def server_index(self):
@@ -119,3 +124,20 @@ class StaplerRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(code, message)
         self.send_header("Content-Length", "0")
         self.end_headers()
+
+    def send_error(
+        self, code: int, message: str | None = None, explain: str | None = None
+    ):
+        shortmsg, longmsg = self.responses[code]
+        if message is None:
+            message = shortmsg
+        if explain is None:
+            explain = longmsg
+        if "Accept" not in self.headers["Accept"] or "text/" in self.headers["Accept"]:
+            self.send_basic_body(
+                f"{code} {message}\n{explain}\n{self.server_version}",
+                code=code,
+                message=message,
+            )
+        else:
+            self.send_status_only(code, message)

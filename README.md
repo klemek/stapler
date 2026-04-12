@@ -82,6 +82,7 @@ curl -X DELETE \
 - [ ] proper doc
 - [ ] log visits (and store accross sessions)
 - [ ] deliver visits in /page/visits
+- [x] better error page
 
 ### Makefile targets
 
