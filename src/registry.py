@@ -1,6 +1,6 @@
 import logging
 
-from . import params, page, data_dir
+from . import data_dir, page, params
 
 
 class Registry:

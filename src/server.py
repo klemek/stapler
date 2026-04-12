@@ -1,8 +1,8 @@
 import http.server
-import os
 import logging
+import os
 
-from . import params, handler, registry, project
+from . import handler, params, project, registry
 
 
 class StaplerServer:

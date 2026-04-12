@@ -1,9 +1,9 @@
-import os
 import io
-import tarfile
-import shutil
-import re
 import logging
+import os
+import re
+import shutil
+import tarfile
 
 
 class DataDir:

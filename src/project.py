@@ -1,6 +1,7 @@
 import os.path
-import toml
 import typing
+
+import toml
 
 __project_data = None
 

@@ -1,13 +1,13 @@
-import typing
-import http.server
 import http
-import tarfile
-import re
+import http.server
 import io
-import os
 import logging
+import os
+import re
+import tarfile
+import typing
 
-from . import project, params, registry, data_dir, logs
+from . import data_dir, logs, params, project, registry
 
 
 class RequestHandler(http.server.SimpleHTTPRequestHandler):
