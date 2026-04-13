@@ -1,11 +1,13 @@
 # ENV
 
-UV ?= uv
-
-ifeq (, $(shell which uv))
+ifeq (,$(shell which uv))
+	ifeq (,$(shell python3 -m uv --help||python3 -m pip install --user uv)) # detect uv install
+		UV ?= false
+	endif
 	UV ?= python3 -m uv
 endif
 
+UV ?= uv
 RUFF ?= $(UV) run --active ruff
 TY ?= $(UV) run --active ty
 DOCKER ?= docker
@@ -17,13 +19,13 @@ PORT ?= 8080
 
 .PHONY: help
 help: ## show this message
-	@echo "Usage: make [target1] (target2) ..."
+	@echo "Usage: $(MAKE) [target1] [target2] ..."
 	@echo ""
 	@echo "Commands/Targets:"
-	@grep -E '(^[a-zA-Z0-9_%-]+:.*?##.*$$)|(^##)' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}{printf "\033[32m%-20s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
+	@cat $(MAKEFILE_LIST) | grep -E '(^[a-zA-Z0-9_%-]+:.*?##.*$$)|(^##)' | awk 'BEGIN {FS = ":.*?## "}{printf "\033[32m%-20s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
 	@echo ""
 	@echo "Environment:"
-	@grep -E '^[a-zA-Z0-9_-]+\s*[?:]?=.*$$' $(MAKEFILE_LIST) | grep -Eo '^[a-zA-Z0-9_-]+' | xargs -I {} make -s print-{}
+	@cat $(MAKEFILE_LIST) | grep -E '^[a-zA-Z0-9_-]+\s*\??=.*$$' | grep -Eo '^[a-zA-Z0-9_-]+' | xargs -I {} $(MAKE) -s print-{} 2> /dev/null
 
 .PHONY: print-%
 print-%:
@@ -32,9 +34,17 @@ print-%:
 # FILES
 
 .venv: uv.lock
-	@$(UV) sync --active
+	@$(MAKE) -s uv-sync
 
 # TOOLS
+
+.PHONY: uv-sync
+uv-sync: ## uv sync
+	@$(UV) sync --active
+
+.PHONY: uv-update
+uv-upgrade: ## uv sync upgrade
+	@$(UV) sync --active --upgrade
 
 .PHONY: ruff
 ruff: .venv ## ruff check
@@ -65,6 +75,12 @@ docker-run: docker-build ## docker run
 	@$(DOCKER) run -it -p $(PORT):8080 -v ./data:/data $(DOCKER_TAG) --debug --no-certbot --token $(TOKEN) run
 
 # ACTIONS
+
+.PHONY: install
+install: uv-sync ## install project
+
+.PHONY: update
+update: uv-upgrade ## update project dependencies
 
 .PHONY: format
 format: ruff-fix ruff-format ## format project

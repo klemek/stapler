@@ -100,15 +100,20 @@ curl -X DELETE \
 - [x] better error page
 - [x] add favicon.ico + special path
 - [x] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
+- [ ] launch separate upgrade 80->443 server when https
+- [ ] token management with "generate" command and bind path to specific token
+- [ ] docker compose example + .env
 - [ ] proper doc
 
 ### Makefile targets
 
 ```txt
-Usage: make [target1] (target2) ...
+Usage: make [target1] [target2] ...
 
 Commands/Targets:
 help                 show this message
+uv-sync              uv sync
+uv-upgrade           uv sync upgrade
 ruff                 ruff check
 ruff-fix             ruff check (and fix)
 ruff-format          ruff format
@@ -116,8 +121,11 @@ ruff-format-check    ruff format (check only)
 ty                   ty check
 docker-build         docker build
 docker-run           docker run
+install              install project
+update               update project dependencies
 format               format project
 lint                 lint project
+build                build project
 start                start server in localhost
 
 Environment:
