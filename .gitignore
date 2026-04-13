@@ -1,3 +1,6 @@
 .venv
 .vscode
 .ruff_cache
+docker-compose.yml
+.env
+letsencrypt

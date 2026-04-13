@@ -1,0 +1,15 @@
+name: stapler
+
+services:
+  stapler:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT}:8080"
+    volumes:
+      - "./data:/data"
+      - "./letsencrypt:/etc/letsencrypt"
+    environment:
+      - HOST=${HOST}
+      - TOKEN=${TOKEN}
+    command: run

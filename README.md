@@ -102,7 +102,7 @@ curl -X DELETE \
 - [x] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
 - [ ] launch separate upgrade 80->443 server when https
 - [ ] token management with "generate" command and bind path to specific token
-- [ ] docker compose example + .env
+- [x] docker compose example + .env
 - [ ] proper doc
 
 ### Makefile targets
