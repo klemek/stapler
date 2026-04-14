@@ -4,8 +4,9 @@ WORKDIR /app
 
 VOLUME [ "/data", "/etc/letsencrypt" ]
 
-ENV PORT=8080
-ENV HOST=localhost:8080
+ENV HTTP_PORT=80
+ENV HTTPS_PORT=443
+ENV HOST=localhost
 ENV DATA_DIR=/data
 ENV MAX_SIZE=2000000
 ENV BIND=0.0.0.0

@@ -72,7 +72,7 @@ docker-build: ## docker build
 
 .PHONY: docker-run
 docker-run: docker-build ## docker run
-	@$(DOCKER) run -it -p $(PORT):8080 -v ./data:/data $(DOCKER_TAG) --debug --no-certbot --token $(TOKEN) run
+	@$(DOCKER) run -it -p $(PORT):80 -v ./data:/data $(DOCKER_TAG) --debug --no-certbot --no-https --token $(TOKEN) --host localhost:$(PORT) run
 
 # ACTIONS
 

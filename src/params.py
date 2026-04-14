@@ -10,7 +10,8 @@ __EPILOG = "(Each option can be supplied with equivalent environment variable.)"
 
 @dataclasses.dataclass(frozen=True)
 class Parameters:
-    port: int
+    http_port: int
+    https_port: int
     host: str
     data_dir: str
     bind: str
@@ -144,16 +145,22 @@ def parse_parameters() -> Parameters:
         parser,
         "--host",
         env_var="HOST",
-        default="localhost:8080",
+        default="localhost",
         help_txt="server default host",
     )
     __add_arg_int(
         parser,
-        "-p",
-        "--port",
-        env_var="PORT",
-        default=8080,
-        help_txt="server port",
+        "--http-port",
+        env_var="HTTP_PORT",
+        default=80,
+        help_txt="server http port",
+    )
+    __add_arg_int(
+        parser,
+        "--https-port",
+        env_var="HTTPS_PORT",
+        default=443,
+        help_txt="server https port",
     )
     parser.add_argument(
         "--https",

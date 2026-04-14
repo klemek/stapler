@@ -4,7 +4,7 @@
 
 ```txt
 usage: stapler [-h] [--debug | --no-debug] [-d DATA_DIR] [--certificates | --no-certificates] [--certbot | --no-certbot] [--self-signed-path SELF_SIGNED_PATH] [--certbot-conf CERTBOT_CONF]
-               [--certbot-www CERTBOT_WWW] [--host HOST] [-p PORT] [--https | --no-https] [-t TOKEN] [--max-size-bytes MAX_SIZE] [-b BIND]
+               [--certbot-www CERTBOT_WWW] [--host HOST] [--http-port HTTP_PORT] [--https-port HTTPS_PORT] [--https | --no-https] [-t TOKEN] [--max-size-bytes MAX_SIZE] [-b BIND]
                COMMAND ...
 
 Static pages as simple as a gzip file
@@ -29,15 +29,18 @@ options:
                         Certbot config dir (default: /etc/letsencrypt)
   --certbot-www CERTBOT_WWW
                         Certbot www dir (default: ./data/.certbot)
-  --host HOST           server default host (default: localhost:8080)
-  -p, --port PORT       server port (default: 8080)
+  --host HOST           server default host (default: localhost)
+  --http-port HTTP_PORT
+                        server http port (default: 80)
+  --https-port HTTPS_PORT
+                        server https port (default: 443)
   --https, --no-https   Use https (implies --certificates) (default: true)
   -t, --token TOKEN     secret token for update requests (default: )
   --max-size-bytes MAX_SIZE
                         max size of accepted archives (in bytes) (default: 2000000)
   -b, --bind BIND       server bind address (default: 0.0.0.0)
 
-(Each option can be supplied with equivalent environment variable.)
+(Each option can be supplied with equivalent environment variable.) 
 ```
 
 ## Endpoints
@@ -100,7 +103,7 @@ curl -X DELETE \
 - [x] better error page
 - [x] add favicon.ico + special path
 - [x] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
-- [ ] launch separate upgrade 80->443 server when https
+- [x] launch separate upgrade 80->443 server when https
 - [ ] token management with "generate" command and bind path to specific token
 - [x] docker compose example + .env
 - [ ] proper doc
