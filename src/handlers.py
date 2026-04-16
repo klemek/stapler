@@ -9,10 +9,10 @@ import re
 import tarfile
 import typing
 
-from . import STAPLER_ASCII, cert, data_dir, logs, project, tokens
+from . import STAPLER_ASCII, data_dir, logs, project
 
 if typing.TYPE_CHECKING:
-    from . import params, registry
+    from . import cert_manager, params, registry, token_manager
 
 
 class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
@@ -151,8 +151,8 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
         *args: typing.Any,
         params: params.Parameters,
         registry: registry.Registry,
-        cert_manager: cert.CertManager,
-        token_manager: tokens.TokenManager,
+        cert_manager: cert_manager.CertManager,
+        token_manager: token_manager.TokenManager,
         **kwargs: dict[str, typing.Any],
     ) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)

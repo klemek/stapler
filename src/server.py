@@ -4,7 +4,15 @@ import logging
 import threading
 import typing
 
-from . import STAPLER_ASCII, cert, data_dir, handlers, project, registry, tokens
+from . import (
+    STAPLER_ASCII,
+    cert_manager,
+    data_dir,
+    handlers,
+    project,
+    registry,
+    token_manager,
+)
 
 if typing.TYPE_CHECKING:
     from . import params
@@ -15,8 +23,8 @@ class StaplerServer:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.params = params
         self.registry = registry.Registry(params)
-        self.cert_manager = cert.CertManager(params)
-        self.token_manager = tokens.TokenManager(params, self.registry)
+        self.cert_manager = cert_manager.CertManager(params)
+        self.token_manager = token_manager.TokenManager(params, self.registry)
         self.data_dir = data_dir.DataDir(params.data_dir)
         self.default_host = params.host.split(":", maxsplit=2)[0]
 
