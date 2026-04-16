@@ -9,16 +9,13 @@ import re
 import tarfile
 import typing
 
-from . import cert, data_dir, logs, project
+from . import STAPLER_ASCII, cert, data_dir, logs, project
 
 if typing.TYPE_CHECKING:
     from . import params, registry
 
 
 class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
-    protocol_version = "HTTP/2.0"
-    server_version = "StaplerServer/" + project.get_version()
-
     @typing.override
     def __init__(
         self,
@@ -45,7 +42,7 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
             explain = longmsg
         if "Accept" not in self.headers["Accept"] or "text/" in self.headers["Accept"]:
             self.send_basic_body(
-                f"{code} {message}\n{explain}\n{self.server_version}\n",
+                f"{code} {message}\n{explain}\n\n{self._server_signature()}",
                 code=code,
                 message=message,
             )
@@ -134,6 +131,9 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
             fmt += " - %s"
         self.logger.debug(fmt, *args)
 
+    def _server_signature(self) -> str:
+        return self.server_version + "\n\n" + STAPLER_ASCII + "\n"
+
 
 class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
     protocol_version = "HTTP/2.0"
@@ -170,7 +170,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
     def do_GET(self) -> None:
         self._pre_log_request()
         if self.path == "/" and self._get_host() == self.default_host:
-            return self.__server_index()
+            return self.send_basic_body(self._server_signature())
         super().do_GET()
         return None
 
@@ -266,11 +266,10 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
     def __valid_host(self, host: str) -> bool:
         return all(self.HOST_PART_REGEX.fullmatch(part) for part in host.split("."))
 
-    def __server_index(self) -> None:
-        self.send_basic_body(self.server_version + "\n")
-
 
 class UpgradeHandler(_BaseHandler):
+    server_version = "StaplerUpgradeServer/" + project.get_version()
+
     def do_HEAD(self) -> None:
         self._pre_log_request()
         self.send_status_only(

@@ -4,7 +4,7 @@ import logging
 import threading
 import typing
 
-from . import cert, data_dir, handlers, project, registry
+from . import STAPLER_ASCII, cert, data_dir, handlers, project, registry
 
 if typing.TYPE_CHECKING:
     from . import params
@@ -106,6 +106,8 @@ class StaplerServer:
 
     def run(self) -> int:
         self.logger.info("Version %s", project.get_version())
+        for line in STAPLER_ASCII.split("\n"):
+            self.logger.debug(line.ljust(36))
         self.__startup()
         base_server, https = self.__create_base_server()
         upgrade_server = self.__start_upgrade_server() if https else None
