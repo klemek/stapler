@@ -99,6 +99,7 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
                 self.send_header(header, value)
         self.end_headers()
         self.wfile.write(encoded)
+        self.close_connection = True
 
     def send_status_only(
         self,
@@ -112,6 +113,7 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
             for header, value in headers.items():
                 self.send_header(header, value)
         self.end_headers()
+        self.close_connection = True
 
     def _get_host(self) -> str:
         if self.headers["Host"] is None:
