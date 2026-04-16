@@ -12,7 +12,6 @@ RUFF ?= $(UV) run --active ruff
 TY ?= $(UV) run --active ty
 DOCKER ?= docker
 DOCKER_TAG ?= localhost/stapler:latest
-TOKEN ?= secret
 PORT ?= 8080
 
 # DOCS
@@ -72,7 +71,7 @@ docker-build: ## docker build
 
 .PHONY: docker-run
 docker-run: docker-build ## docker run
-	@$(DOCKER) run -it -p $(PORT):80 -v ./data:/data $(DOCKER_TAG) --debug --no-certbot --no-https --token $(TOKEN) --host localhost:$(PORT) run
+	@$(DOCKER) run -it -p $(PORT):80 -v ./data:/data $(DOCKER_TAG) --debug --no-certbot --no-https --host localhost:$(PORT) run
 
 # ACTIONS
 

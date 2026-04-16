@@ -26,6 +26,7 @@ class CertManager:
         self.with_certbot = params.with_certbot
 
     def init(self, hosts: list[str]) -> None:
+        self.logger.debug("Initializing...")
         if not self.certbot_www.exists():
             self.certbot_www.mkdir(parents=True)
             self.logger.debug("Created %s", self.certbot_www)

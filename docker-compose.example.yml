@@ -12,5 +12,5 @@ services:
       - "./letsencrypt:/etc/letsencrypt"
     environment:
       - HOST=${HOST}
-      - TOKEN=${TOKEN}
+      - TOKEN_SALT=${TOKEN_SALT}
     command: run

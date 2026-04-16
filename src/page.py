@@ -6,6 +6,7 @@ class Page:
     path: str
     with_index: bool
     host: str | None = None
+    token_hash: str | None = None
 
     def get_url_path(self) -> str:
         return f"/{self.path}/"

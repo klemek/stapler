@@ -10,7 +10,6 @@ if typing.TYPE_CHECKING:
 
 
 class DataDir:
-    HOST_FILE = ".host"
     PATH_REGEX = re.compile(r"^[\w-]+$")
     NEEDED_FILES: typing.ClassVar[list[str]] = ["favicon.ico"]
 
@@ -19,6 +18,7 @@ class DataDir:
         self.root_path = pathlib.Path(root_path)
 
     def init(self) -> None:
+        self.logger.debug("Initializing...")
         for file in self.NEEDED_FILES:
             if not (self.root_path / file).is_file():
                 (pathlib.Path.cwd() / file).copy_into(self.root_path)
@@ -34,28 +34,28 @@ class DataDir:
     def __valid_path(self, path: str) -> bool:
         return self.PATH_REGEX.match(path) is not None
 
-    def set_host(self, path: str, host: str) -> None:
-        if self.exists(path):
-            path_host = self.root_path / path / self.HOST_FILE
-            with path_host.open(mode="w") as host_file:
-                host_file.write(host)
-            self.logger.debug("Wrote %s", path_host)
-
     def has_index(self, path: str) -> bool:
         if self.exists(path):
             path_index = self.root_path / path / "index.html"
             return path_index.is_file()
         return False
 
-    def get_host(self, path: str) -> str | None:
+    def set_file(self, path: str, file_name: str, value: str) -> None:
         if self.exists(path):
-            path_host = self.root_path / path / self.HOST_FILE
-            if path_host.is_file():
+            file_path = self.root_path / path / file_name
+            with file_path.open(mode="w") as file:
+                file.write(value)
+            self.logger.debug("Wrote %s", file_path)
+
+    def get_file(self, path: str, file_name: str) -> str | None:
+        if self.exists(path):
+            file_path = self.root_path / path / file_name
+            if file_path.is_file():
                 try:
-                    with path_host.open() as host_file:
-                        return host_file.read().split("\n")[0].strip()
+                    with file_path.open() as file:
+                        return file.read().split("\n")[0].strip()
                 except Exception:
-                    self.logger.exception("Cannot read %s", path_host)
+                    self.logger.exception("Cannot read %s", file_path)
             return None
         return None
 

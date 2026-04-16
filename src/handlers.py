@@ -9,7 +9,7 @@ import re
 import tarfile
 import typing
 
-from . import STAPLER_ASCII, cert, data_dir, logs, project
+from . import STAPLER_ASCII, cert, data_dir, logs, project, tokens
 
 if typing.TYPE_CHECKING:
     from . import params, registry
@@ -150,10 +150,11 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
         params: params.Parameters,
         registry: registry.Registry,
         cert_manager: cert.CertManager,
+        token_manager: tokens.TokenManager,
         **kwargs: dict[str, typing.Any],
     ) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.token = params.token
+        self.token_manager = token_manager
         self.data_dir = data_dir.DataDir(params.data_dir)
         self.max_size_bytes = params.max_size_bytes
         self.registry = registry
@@ -202,9 +203,9 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
             f"Resource /{sub_path}/ updated",
         )
         self.registry.add(sub_path)
+        self.token_manager.set_token(self.headers["X-Token"], sub_path)
         if host is not None and self.cert_manager.create_or_update(host):
             self.registry.set_host(sub_path, host)
-            self.registry.add(sub_path)
         return None
 
     def do_DELETE(self) -> None:
@@ -245,11 +246,17 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
         return super().translate_path(path)
 
     def __check_update_request(self) -> str | None:
-        if len(self.token) and self.headers["X-Token"] != self.token:
+        if (token := self.headers["X-Token"]) is None:
+            self.send_error(http.HTTPStatus.BAD_REQUEST, "No X-Token header in request")
+            return None
+        if not self.token_manager.is_valid(token):
             self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
             return None
         if (sub_path := self.__get_subpath_full(self.path)) is None:
             self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
+            return None
+        if not self.token_manager.is_valid_for_path(token, sub_path):
+            self.send_error(http.HTTPStatus.FORBIDDEN, "Path forbidden for this token")
             return None
         return sub_path
 

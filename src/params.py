@@ -15,7 +15,7 @@ class Parameters:
     host: str
     data_dir: str
     bind: str
-    token: str
+    token_salt: str
     max_size_bytes: int
     certbot_conf: str
     certbot_www: str
@@ -55,7 +55,7 @@ def __add_arg_str(
         *flags,
         metavar=env_var,
         default=__get_env_str(env_var, default),
-        help=f"{help_txt} (default: {default})",
+        help=f"{help_txt} (default: {default})" if len(default) else help_txt,
     )
 
 
@@ -171,10 +171,10 @@ def parse_parameters() -> Parameters:
     __add_arg_str(
         parser,
         "-t",
-        "--token",
-        env_var="TOKEN",
+        "--token-salt",
+        env_var="TOKEN_SALT",
         default="",
-        help_txt="secret token for update requests",
+        help_txt="salt for tokens generation",
     )
     __add_arg_int(
         parser,
@@ -194,6 +194,7 @@ def parse_parameters() -> Parameters:
     subparsers = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     subparsers.add_parser("run", help="Run Stapler server")
     subparsers.add_parser("renew", help="Renew certificates")
+    subparsers.add_parser("token", help="Generate a new token")
     args = parser.parse_args()
     if args.https:
         args.with_certificates = True

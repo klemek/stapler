@@ -4,7 +4,7 @@ import logging
 import threading
 import typing
 
-from . import STAPLER_ASCII, cert, data_dir, handlers, project, registry
+from . import STAPLER_ASCII, cert, data_dir, handlers, project, registry, tokens
 
 if typing.TYPE_CHECKING:
     from . import params
@@ -16,6 +16,7 @@ class StaplerServer:
         self.params = params
         self.registry = registry.Registry(params)
         self.cert_manager = cert.CertManager(params)
+        self.token_manager = tokens.TokenManager(params, self.registry)
         self.data_dir = data_dir.DataDir(params.data_dir)
         self.default_host = params.host.split(":", maxsplit=2)[0]
 
@@ -28,8 +29,7 @@ class StaplerServer:
         if self.params.with_certificates:
             self.cert_manager.init(self.__get_all_hosts())
         self.data_dir.init()
-        if not len(self.params.token):
-            self.logger.warning("No token provided update requests will fail")
+        self.token_manager.init()
 
     def __create_https_context(self, server: http.server.HTTPServer) -> bool:
         https = False
@@ -48,6 +48,7 @@ class StaplerServer:
             params=self.params,
             registry=self.registry,
             cert_manager=self.cert_manager,
+            token_manager=self.token_manager,
         )
 
     def __create_base_server(self) -> tuple[http.server.ThreadingHTTPServer, bool]:
@@ -132,4 +133,11 @@ class StaplerServer:
         self.cert_manager.init(self.__get_all_hosts())
         for host in self.__get_all_hosts():
             self.cert_manager.create_or_update(host)
+        return 0
+
+    def token(self) -> int:
+        self.logger.info("Starting up...")
+        self.registry.load_pages()
+        self.token_manager.init()
+        self.token_manager.new_token()
         return 0

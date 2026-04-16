@@ -3,8 +3,10 @@
 ![logo.svg](logo.svg)
 
 ```txt
-usage: stapler [-h] [--debug | --no-debug] [-d DATA_DIR] [--certificates | --no-certificates] [--certbot | --no-certbot] [--self-signed-path SELF_SIGNED_PATH] [--certbot-conf CERTBOT_CONF]
-               [--certbot-www CERTBOT_WWW] [--host HOST] [--http-port HTTP_PORT] [--https-port HTTPS_PORT] [--https | --no-https] [-t TOKEN] [--max-size-bytes MAX_SIZE] [-b BIND]
+usage: stapler [-h] [--debug | --no-debug] [-d DATA_DIR] [--certificates | --no-certificates] [--certbot | --no-certbot]
+               [--self-signed-path SELF_SIGNED_PATH] [--certbot-conf CERTBOT_CONF] [--certbot-www CERTBOT_WWW]
+               [--host HOST] [--http-port HTTP_PORT] [--https-port HTTPS_PORT] [--https | --no-https] [-t TOKEN_SALT]
+               [--max-size-bytes MAX_SIZE] [-b BIND]
                COMMAND ...
 
 Static pages as simple as a gzip file
@@ -13,6 +15,7 @@ positional arguments:
   COMMAND
     run                 Run Stapler server
     renew               Renew certificates
+    token               Generate a new token
 
 options:
   -h, --help            show this help message and exit
@@ -35,12 +38,13 @@ options:
   --https-port HTTPS_PORT
                         server https port (default: 443)
   --https, --no-https   Use https (implies --certificates) (default: true)
-  -t, --token TOKEN     secret token for update requests (default: )
+  -t, --token-salt TOKEN_SALT
+                        salt for tokens generation
   --max-size-bytes MAX_SIZE
                         max size of accepted archives (in bytes) (default: 2000000)
   -b, --bind BIND       server bind address (default: 0.0.0.0)
 
-(Each option can be supplied with equivalent environment variable.) 
+(Each option can be supplied with equivalent environment variable.)
 ```
 
 ## Endpoints
@@ -104,7 +108,7 @@ curl -X DELETE \
 - [x] add favicon.ico + special path
 - [x] [http.server security](https://docs.python.org/3/library/http.server.html#http-server-security)
 - [x] launch separate upgrade 80->443 server when https
-- [ ] token management with "generate" command and bind path to specific token
+- [x] token management with "generate" command and bind path to specific token
 - [x] docker compose example + .env
 - [ ] proper doc
 
