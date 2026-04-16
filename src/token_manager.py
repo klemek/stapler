@@ -4,6 +4,8 @@ import pathlib
 import secrets
 import typing
 
+from . import project
+
 if typing.TYPE_CHECKING:
     from . import params, registry
 
@@ -24,10 +26,10 @@ class TokenManager:
             self.logger.warning(
                 "No salt provided, tokens will be cryptographically weak"
             )
-        if not self.tokens_file.exists():
-            self.tokens_file.touch()
-        self.tokens_file.chmod(0o600)
         self.token_hashes = self.__load_hashes()
+        if not self.tokens_file.exists():
+            self.__save_hashes()
+        self.tokens_file.chmod(0o600)
 
     def is_valid(self, token: str) -> bool:
         return self.__hash_token(token) in self.token_hashes
@@ -55,11 +57,18 @@ class TokenManager:
     def __load_hashes(self) -> list[str]:
         if self.tokens_file.is_file():
             with self.tokens_file.open() as file:
-                return [line.strip() for line in file]
+                hashes = [line.strip() for line in file]
+                if len(hashes) == 0 or hashes[0] != self.__control_hash():
+                    self.logger.critical("TOKEN_SALT CHANGED HASHES NOT LOADED")
+                    return []
+                return hashes[1:]
         return []
 
     def __save_hashes(self) -> None:
         with self.tokens_file.open(mode="w") as file:
-            file.write("\n".join(self.token_hashes))
+            file.write("\n".join([self.__control_hash(), *self.token_hashes]))
         self.tokens_file.chmod(0o600)
         self.logger.debug("Updated %s", self.tokens_file)
+
+    def __control_hash(self) -> str:
+        return self.__hash_token(project.get_name())
