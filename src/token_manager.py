@@ -24,6 +24,9 @@ class TokenManager:
             self.logger.warning(
                 "No salt provided, tokens will be cryptographically weak"
             )
+        if not self.tokens_file.exists():
+            self.tokens_file.touch()
+        self.tokens_file.chmod(0o600)
         self.token_hashes = self.__load_hashes()
 
     def is_valid(self, token: str) -> bool:
@@ -58,4 +61,5 @@ class TokenManager:
     def __save_hashes(self) -> None:
         with self.tokens_file.open(mode="w") as file:
             file.write("\n".join(self.token_hashes))
+        self.tokens_file.chmod(0o600)
         self.logger.debug("Updated %s", self.tokens_file)

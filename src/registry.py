@@ -41,7 +41,7 @@ class Registry:
 
     def set_token_hash(self, path: str, token_hash: str) -> None:
         if self.pages[path].token_hash != token_hash:
-            self.data_dir.set_file(path, self.TOKEN_FILE, token_hash)
+            self.data_dir.set_file(path, self.TOKEN_FILE, token_hash, 0o600)
             self.pages[path].token_hash = token_hash
             self.logger.debug("Updated %s", self.pages[path])
 

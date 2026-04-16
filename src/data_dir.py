@@ -40,11 +40,14 @@ class DataDir:
             return path_index.is_file()
         return False
 
-    def set_file(self, path: str, file_name: str, value: str) -> None:
+    def set_file(
+        self, path: str, file_name: str, value: str, chmod: int = 0o644
+    ) -> None:
         if self.exists(path):
             file_path = self.root_path / path / file_name
             with file_path.open(mode="w") as file:
                 file.write(value)
+            file_path.chmod(chmod)
             self.logger.debug("Wrote %s", file_path)
 
     def get_file(self, path: str, file_name: str) -> str | None:
