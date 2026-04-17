@@ -6,7 +6,7 @@ from src.server import StaplerServer
 
 
 def main() -> None:
-    params = parse_parameters()
+    params = parse_parameters(sys.argv[1:])
     setup_logs(params)
     server = StaplerServer(params)
     method = getattr(server, params.command)
