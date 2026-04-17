@@ -70,6 +70,12 @@ class DataDir:
                     shutil.rmtree(target_path)
                     self.logger.debug("Deleted %s", target_path)
                 tar_file.extractall(target_path, filter="data")
+                for target_file in target_path.iterdir():
+                    if re.match(r"^\..*", target_file.name):  # remove dot files
+                        if target_file.is_dir():
+                            shutil.rmtree(target_file)
+                        else:
+                            target_file.unlink()
                 self.logger.debug("Extracted tar to %s", target_path)
 
     def remove(self, path: str) -> None:
