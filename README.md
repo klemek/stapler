@@ -125,6 +125,15 @@ Usage: make [target1] [target2] ...
 
 Commands/Targets:
 help                 show this message
+install              install project
+update               update project dependencies
+format               format project
+lint                 lint project
+build                build project
+start                start server in localhost
+test                 test project
+test-%               test project with specific test
+coverage             test project with coverage
 uv-sync              uv sync
 uv-upgrade           uv sync upgrade
 ruff                 ruff check
@@ -132,21 +141,12 @@ ruff-fix             ruff check (and fix)
 ruff-format          ruff format
 ruff-format-check    ruff format (check only)
 ty                   ty check
+unittest             unittest
+unittest-%           unittest -k [filter]
+coverage-unittest    coverage run -m unittest
+coverage-report      coverage report
+coverage-html        coverage html
+coverage-xml         coverage xml
 docker-build         docker build
 docker-run           docker run
-install              install project
-update               update project dependencies
-format               format project
-lint                 lint project
-build                build project
-start                start server in localhost
-
-Environment:
-UV = uv
-RUFF = uv run --active ruff
-TY = uv run --active ty
-DOCKER = docker
-DOCKER_TAG = localhost/stapler:latest
-TOKEN = secret
-PORT = 8080
 ```

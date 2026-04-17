@@ -10,6 +10,8 @@ endif
 UV ?= uv
 RUFF ?= $(UV) run --active ruff
 TY ?= $(UV) run --active ty
+UNITTEST ?= $(UV) run --active -m unittest
+COVERAGE ?= $(UV) run --active coverage
 DOCKER ?= docker
 DOCKER_TAG ?= localhost/stapler:latest
 PORT ?= 8080
@@ -34,6 +36,36 @@ print-%:
 
 .venv: uv.lock
 	@$(MAKE) -s uv-sync
+
+# ACTIONS
+
+.PHONY: install
+install: uv-sync ## install project
+
+.PHONY: update
+update: uv-upgrade ## update project dependencies
+
+.PHONY: format
+format: ruff-fix ruff-format ## format project
+
+.PHONY: lint
+lint: ruff ruff-format-check ty ## lint project
+
+.PHONY: build
+build: docker-build ## build project
+
+.PHONY: start
+start: build docker-run ## start server in localhost
+
+.PHONY: test
+test: unittest ## test project
+
+.PHONY: test-%
+test-%: ## test project with specific test
+	@$(MAKE) -s unittest-$*
+
+.PHONY: coverage
+coverage: coverage-unittest coverage-xml coverage-report ## test project with coverage
 
 # TOOLS
 
@@ -65,6 +97,30 @@ ruff-format-check: .venv ## ruff format (check only)
 ty: .venv ## ty check
 	@$(TY) check
 
+.PHONY: unittest
+unittest: .venv ## unittest
+	@$(UNITTEST) -v
+
+.PHONY: unittest-%
+unittest-%: .venv ## unittest -k [filter]
+	@$(UNITTEST) -v -k $*
+
+.PHONY: coverage-unittest
+coverage-unittest: .venv ## coverage run -m unittest
+	@$(COVERAGE) run -m unittest -v
+
+.PHONY: coverage-report
+coverage-report: .venv ## coverage report
+	@$(COVERAGE) report
+
+.PHONY: coverage-html
+coverage-html: .venv ## coverage html
+	@$(COVERAGE) html
+
+.PHONY: coverage-xml
+coverage-xml: .venv ## coverage xml
+	@$(COVERAGE) xml
+
 .PHONY: docker-build
 docker-build: ## docker build
 	@$(DOCKER) build . -t $(DOCKER_TAG)
@@ -72,23 +128,3 @@ docker-build: ## docker build
 .PHONY: docker-run
 docker-run: docker-build ## docker run
 	@$(DOCKER) run -it -p $(PORT):80 -v ./data:/data $(DOCKER_TAG) --debug --no-certbot --no-https --host localhost:$(PORT) run
-
-# ACTIONS
-
-.PHONY: install
-install: uv-sync ## install project
-
-.PHONY: update
-update: uv-upgrade ## update project dependencies
-
-.PHONY: format
-format: ruff-fix ruff-format ## format project
-
-.PHONY: lint
-lint: ruff ruff-format-check ty ## lint project
-
-.PHONY: build
-build: docker-build ## build project
-
-.PHONY: start
-start: build docker-run ## start server in localhost

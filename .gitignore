@@ -4,3 +4,6 @@
 docker-compose.yml
 .env
 letsencrypt
+.coverage
+htmlcov
+coverage.xml

@@ -10,10 +10,15 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "coverage>=7.13.5",
     "ruff>=0.15.10",
     "ty>=0.0.29",
 ]
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D", "E501", "S104", "PLR2004", "ANN401", "BLE001", "COM812", "S603", "PLR0911"]
+ignore = ["D", "E501", "S104", "PLR2004", "ANN401", "BLE001", "COM812", "S603", "PLR0911", "S101", "PT"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/logs.py"]
