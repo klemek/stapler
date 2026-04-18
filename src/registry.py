@@ -34,21 +34,22 @@ class Registry:
         self.logger.info("Updated %s", self.pages[path])
 
     def set_host(self, path: str, host: str) -> None:
-        if self.pages[path].host != host:
+        if path in self.pages and self.pages[path].host != host:
             self.data_dir.set_file(path, self.HOST_FILE, host)
             self.pages[path].host = host
             self.logger.debug("Updated %s", self.pages[path])
 
     def set_token_hash(self, path: str, token_hash: str) -> None:
-        if self.pages[path].token_hash != token_hash:
+        if path in self.pages and self.pages[path].token_hash != token_hash:
             self.data_dir.set_file(path, self.TOKEN_FILE, token_hash, 0o600)
             self.pages[path].token_hash = token_hash
             self.logger.debug("Updated %s", self.pages[path])
 
     def remove(self, path: str) -> None:
-        page = self.pages[path]
-        del self.pages[path]
-        self.logger.info("Removed %s", page)
+        if path in self.pages:
+            page = self.pages[path]
+            del self.pages[path]
+            self.logger.info("Removed %s", page)
 
     def get_from_path(self, path: str) -> page.Page | None:
         if path in self.pages:
