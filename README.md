@@ -113,7 +113,8 @@ curl -X DELETE \
 - [ ] proper doc
 - [ ] unit tests
 - [x] 404 GET on host not found
-- [ ] 403 PUT on host already taken
+- [x] 403 PUT on host already taken
+- [ ] remove dot files after file extract
 - [ ] X-Redirect
 - [ ] X-Proxy
 

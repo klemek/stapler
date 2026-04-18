@@ -40,7 +40,9 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
             message = shortmsg
         if explain is None:
             explain = longmsg
-        if "Accept" not in self.headers["Accept"] or "text/" in self.headers["Accept"]:
+        if hasattr(self, "headers") and (
+            "Accept" not in self.headers["Accept"] or "text/" in self.headers["Accept"]
+        ):
             self.send_basic_body(
                 f"{code} {message}\n{explain}\n\n{self._server_signature()}",
                 code=code,
@@ -116,12 +118,12 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
         self.close_connection = True
 
     def _get_host(self) -> str:
-        if self.headers["Host"] is None:
+        if not hasattr(self, "headers") or self.headers["Host"] is None:
             return self.default_host
         return self.headers["Host"].split(":", maxsplit=2)[0]
 
     def _get_length(self) -> int:
-        if not self.headers["Content-Length"]:
+        if not hasattr(self, "headers") or not self.headers["Content-Length"]:
             return 0
         return int(self.headers["Content-Length"])
 
@@ -186,6 +188,10 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
             return self.send_error(
                 http.HTTPStatus.BAD_REQUEST, "Invalid requested host"
             )
+        if (
+            page := self.registry.get_from_host(host)
+        ) is not None and page.path != sub_path:
+            return self.send_error(http.HTTPStatus.FORBIDDEN, "Host already taken")
         if (content_length := self._get_length()) == 0:
             return self.send_error(http.HTTPStatus.LENGTH_REQUIRED, "No body found")
         if content_length > self.max_size_bytes:
