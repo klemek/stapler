@@ -237,8 +237,10 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
     def translate_path(self, path: str) -> str:
         if path.startswith(self.CERTBOT_CHALLENGE_PATH):
             return self.certbot_www + path
-        if (page := self.registry.get_from_host(self._get_host())) is not None:
+        if (page := self.registry.get_from_host(host := self._get_host())) is not None:
             path = f"/{page.path}" + path
+        elif host != self.default_host:
+            return ""
         elif (
             path not in self.AUTHORIZED_PATHS and self.__get_subpath(path) is None
         ):  # not a valid path
