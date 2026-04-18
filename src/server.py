@@ -39,16 +39,7 @@ class StaplerServer:
         self.data_dir.init()
         self.token_manager.init()
 
-    def __create_https_context(self, server: http.server.HTTPServer) -> bool:
-        https = False
-        if (
-            context := self.cert_manager.get_https_context(self.default_host)
-        ) is not None:
-            https = True
-            server.socket = context.wrap_socket(server.socket, server_side=True)
-        return https
-
-    def __request_handler(
+    def __request_handler(  # pragma: no cover
         self, *args: typing.Any
     ) -> http.server.BaseHTTPRequestHandler:
         return handlers.RequestHandler(
@@ -89,7 +80,7 @@ class StaplerServer:
         )
         return server, context is not None
 
-    def __upgrade_handler(
+    def __upgrade_handler(  # pragma: no cover
         self, *args: typing.Any
     ) -> http.server.BaseHTTPRequestHandler:
         return handlers.UpgradeHandler(
