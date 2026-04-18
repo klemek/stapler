@@ -111,6 +111,9 @@ class CertManager:
                 stderr=subprocess.STDOUT,
             )
             self.logger.info("Created self-signed certificate for %s", host)
+        except CertManagerError:
+            self.logger.exception("Could not create certbot certificate for %s\n%s")
+            return False
         except subprocess.CalledProcessError as e:
             self.logger.exception(
                 "Could not create self-signed certificate for %s\n%s",
@@ -158,6 +161,9 @@ class CertManager:
                 stderr=subprocess.STDOUT,
             )
             self.logger.info("Created certbot certificate for %s", host)
+        except CertManagerError:
+            self.logger.exception("Could not create certbot certificate for %s\n%s")
+            return False
         except subprocess.CalledProcessError as e:
             self.logger.exception(
                 "Could not create certbot certificate for %s\n%s",
@@ -182,10 +188,10 @@ class CertManager:
         return context
 
     def __sni_callback(
-        self, socket: ssl.SSLObject, host: str, _: ssl.SSLContext, /
+        self, socket: ssl.SSLObject, host: str | None, _: ssl.SSLContext, /
     ) -> None | int:
         if host is None:
-            return
+            return None
         if not self.exists(host) and not self.create_or_update(host):
             msg = "Could not get certificate for %s"
             raise CertManagerError(msg, host)
