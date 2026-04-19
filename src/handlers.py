@@ -15,7 +15,7 @@ if typing.TYPE_CHECKING:
     from . import cert_manager, params, registry, token_manager
 
 
-class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
+class BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
     @typing.override
     def __init__(
         self,
@@ -37,14 +37,12 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
     ) -> None:
         shortmsg, longmsg = self.responses[code]
         if message is None:
-            message = shortmsg
+            message = shortmsg  # pragma: no cover
         if explain is None:
             explain = longmsg
-        if hasattr(self, "headers") and (
-            "Accept" not in self.headers["Accept"] or "text/" in self.headers["Accept"]
-        ):
+        if "text/" in self._get_header("Accept"):
             self.send_basic_body(
-                f"{code} {message}\n{explain}\n\n{self._server_signature()}",
+                f"{code} {message}\n{explain}\n\n{self.server_signature()}",
                 code=code,
                 message=message,
             )
@@ -52,17 +50,17 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
             self.send_status_only(code, message)
 
     @typing.override
-    def log_message(self, format: str, *args: typing.Any) -> None:
+    def log_message(self, format: str, *args: typing.Any) -> None:  # pragma: no cover
         fmt = "%s - " + format
         self.logger.info(fmt, self.address_string(), *args)
 
     @typing.override
-    def log_error(self, format: str, *args: typing.Any) -> None:
+    def log_error(self, format: str, *args: typing.Any) -> None:  # pragma: no cover
         fmt = "%s - " + format
         self.logger.error(fmt, self.address_string(), *args)
 
     @typing.override
-    def log_request(self, code: str = "?", size: str = "-") -> None:  # ty:ignore[invalid-method-override]
+    def log_request(self, code: str = "?", size: str = "-") -> None:  # ty:ignore[invalid-method-override] # pragma: no cover
         if isinstance(code, http.HTTPStatus):
             color = logs.TermColor.RED
             if 100 <= code < 200:
@@ -91,14 +89,15 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
         message: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> None:
+        if headers is None:
+            headers = {}
         encoded: bytes = body.encode()
         self.out_size = len(encoded)
         self.send_response(code, message)
         self.send_header("Content-type", f"{content_type}; charset=UTF-8")
         self.send_header("Content-Length", str(len(encoded)))
-        if headers is not None:
-            for header, value in headers.items():
-                self.send_header(header, value)
+        for header, value in headers.items():
+            self.send_header(header, value)  # pragma: no cover
         self.end_headers()
         self.wfile.write(encoded)
         self.close_connection = True
@@ -109,25 +108,35 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
         message: str | None = None,
         headers: dict[str, str] | None = None,
     ) -> None:
+        if headers is None:
+            headers = {}
         self.send_response(code, message)
         self.send_header("Content-Length", "0")
-        if headers is not None:
-            for header, value in headers.items():
-                self.send_header(header, value)
+        for header, value in headers.items():
+            self.send_header(header, value)
         self.end_headers()
         self.close_connection = True
 
     def _get_host(self) -> str:
-        if not hasattr(self, "headers") or self.headers["Host"] is None:
-            return self.default_host
-        return self.headers["Host"].split(":", maxsplit=2)[0]
+        host = self._get_header("Host", self.default_host)
+        return host.split(":", maxsplit=2)[0]
 
     def _get_length(self) -> int:
-        if not hasattr(self, "headers") or not self.headers["Content-Length"]:
-            return 0
-        return int(self.headers["Content-Length"])
+        return int(self._get_header("Content-Length", "0"))
 
-    def _pre_log_request(self) -> None:
+    def _get_header(self, key: str, default_value: str = "") -> str:
+        if self._has_header(key):
+            return self.headers[key]
+        return default_value
+
+    def _has_header(self, key: str) -> bool:
+        return (
+            hasattr(self, "headers")
+            and key in self.headers
+            and len(self.headers[key]) > 0
+        )
+
+    def _pre_log_request(self) -> None:  # pragma: no cover
         args = ("...", self.address_string(), self._get_host(), self.requestline)
         fmt = "← %s - %s - %s - %s"
         if (size := self._get_length()) > 0:
@@ -135,17 +144,20 @@ class _BaseHandler(abc.ABC, http.server.BaseHTTPRequestHandler):
             fmt += " - %s"
         self.logger.debug(fmt, *args)
 
-    def _server_signature(self) -> str:
+    def server_signature(self) -> str:
         return self.server_version + "\n\n" + STAPLER_ASCII + "\n"
 
 
-class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
+class RequestHandler(http.server.SimpleHTTPRequestHandler, BaseHandler):
     protocol_version = "HTTP/2.0"
     server_version = "StaplerServer/" + project.get_version()
     CERTBOT_CHALLENGE_PATH = "/.well-known/acme-challenge"
-    PATH_REGEX = re.compile(r"^\/([\w-]+)\/")
-    HOST_PART_REGEX = re.compile(r"^([a-zA-Z0-9]|[a-zA-Z0-9]*[a-zA-Z0-9][a-zA-Z0-9])$")
+    UPDATE_PATH_REGEX = re.compile(r"^\/([\w-]+)\/?$")
+    GET_PATH_REGEX = re.compile(r"^\/([\w-]+)\/")
+    HOST_PART_REGEX = re.compile(r"^([a-z0-9]|[a-z0-9][a-z0-9-]{,61}[a-z0-9])$")
     AUTHORIZED_PATHS: typing.ClassVar[list[str]] = ["/favicon.ico"]
+    TOKEN_HEADER = "X-Token"  # noqa: S105
+    HOST_HEADER = "X-Host"
 
     @typing.override
     def __init__(
@@ -175,7 +187,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
     def do_GET(self) -> None:
         self._pre_log_request()
         if self.path == "/" and self._get_host() == self.default_host:
-            return self.send_basic_body(self._server_signature())
+            return self.send_basic_body(self.server_signature())
         super().do_GET()
         return None
 
@@ -183,14 +195,20 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
         self._pre_log_request()
         if (sub_path := self.__check_update_request()) is None:
             return None
-        host: str | None = self.headers["X-Host"]
+        host: str | None = (
+            self._get_header(self.HOST_HEADER).lower()
+            if self._has_header(self.HOST_HEADER)
+            else None
+        )
         if host is not None and not self.__valid_host(host):
             return self.send_error(
                 http.HTTPStatus.BAD_REQUEST, "Invalid requested host"
             )
         if (
-            page := self.registry.get_from_host(host)
-        ) is not None and page.path != sub_path:
+            host is not None
+            and (page := self.registry.get_from_host(host)) is not None
+            and page.path != sub_path
+        ):
             return self.send_error(http.HTTPStatus.FORBIDDEN, "Host already taken")
         if (content_length := self._get_length()) == 0:
             return self.send_error(http.HTTPStatus.LENGTH_REQUIRED, "No body found")
@@ -211,7 +229,7 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
             f"Resource /{sub_path}/ updated",
         )
         self.registry.add(sub_path)
-        self.token_manager.set_token(self.headers["X-Token"], sub_path)
+        self.token_manager.set_token(self._get_header(self.TOKEN_HEADER), sub_path)
         if host is not None and self.cert_manager.create_or_update(host):
             self.registry.set_host(sub_path, host)
         return None
@@ -243,12 +261,18 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
     def translate_path(self, path: str) -> str:
         if path.startswith(self.CERTBOT_CHALLENGE_PATH):
             return self.certbot_www + path
-        if (page := self.registry.get_from_host(host := self._get_host())) is not None:
+        host = self._get_host()
+        if (
+            host != self.default_host
+            and (page := self.registry.get_from_host(host := self._get_host()))
+            is not None
+        ):
             path = f"/{page.path}" + path
         elif host != self.default_host:
             return ""
         elif (
-            path not in self.AUTHORIZED_PATHS and self.__get_subpath(path) is None
+            path not in self.AUTHORIZED_PATHS
+            and self.__get_subpath(path, self.GET_PATH_REGEX) is None
         ):  # not a valid path
             return ""
         if pathlib.Path(path).name.startswith("."):  # hidden files
@@ -256,13 +280,14 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
         return super().translate_path(path)
 
     def __check_update_request(self) -> str | None:
-        if (token := self.headers["X-Token"]) is None:
+        if not self._has_header(self.TOKEN_HEADER):
             self.send_error(http.HTTPStatus.BAD_REQUEST, "No X-Token header in request")
             return None
+        token = self._get_header(self.TOKEN_HEADER)
         if not self.token_manager.is_valid(token):
             self.send_error(http.HTTPStatus.UNAUTHORIZED, "Invalid token")
             return None
-        if (sub_path := self.__get_subpath_full(self.path)) is None:
+        if (sub_path := self.__get_subpath(self.path, self.UPDATE_PATH_REGEX)) is None:
             self.send_error(http.HTTPStatus.BAD_REQUEST, "Invalid path")
             return None
         if not self.token_manager.is_valid_for_path(token, sub_path):
@@ -270,28 +295,26 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler, _BaseHandler):
             return None
         return sub_path
 
-    def __get_subpath(self, path: str) -> str | None:
-        if (match := self.PATH_REGEX.match(path)) is not None:
-            return match.group(1)
-        return None
-
-    def __get_subpath_full(self, path: str) -> str | None:
-        if (match := self.PATH_REGEX.fullmatch(path)) is not None:
+    def __get_subpath(self, path: str, regex: re.Pattern) -> str | None:
+        if (match := regex.match(path.lower())) is not None:
             return match.group(1)
         return None
 
     def __valid_host(self, host: str) -> bool:
-        return all(self.HOST_PART_REGEX.fullmatch(part) for part in host.split("."))
+        return (
+            all(self.HOST_PART_REGEX.fullmatch(part) for part in host.split("."))
+            and len(host) < 256
+        )
 
 
-class UpgradeHandler(_BaseHandler):
+class UpgradeHandler(BaseHandler):
     server_version = "StaplerUpgradeServer/" + project.get_version()
 
     def do_HEAD(self) -> None:
         self._pre_log_request()
         self.send_status_only(
             http.HTTPStatus.MOVED_PERMANENTLY,
-            headers={"Location": f"https://{self._get_host()}{self.path}"},
+            headers={"Location": f"https://{self._get_host()}{self.path.lower()}"},
         )
 
     def do_GET(self) -> None:
