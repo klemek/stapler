@@ -110,13 +110,14 @@ curl -X DELETE \
 - [x] launch separate upgrade 80->443 server when https
 - [x] token management with "generate" command and bind path to specific token
 - [x] docker compose example + .env
-- [ ] proper doc
-- [ ] unit tests
 - [x] 404 GET on host not found
 - [x] 403 PUT on host already taken
 - [x] remove dot files after file extract
+- [x] unit tests
+- [ ] github actions
 - [ ] X-Redirect
 - [ ] X-Proxy
+- [ ] proper doc
 
 ### Makefile targets
 
