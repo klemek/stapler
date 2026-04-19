@@ -114,7 +114,7 @@ curl -X DELETE \
 - [x] 403 PUT on host already taken
 - [x] remove dot files after file extract
 - [x] unit tests
-- [ ] github actions
+- [x] github actions
 - [ ] X-Redirect
 - [ ] X-Proxy
 - [ ] proper doc
